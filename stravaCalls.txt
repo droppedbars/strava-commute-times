@@ -1,0 +1,30 @@
+One place reminders of how to interact with some of the Strava APIs
+
+# Authenticate
+
+A website would redirect the user to here
+http://www.strava.com/oauth/authorize?client_id=[REPLACE_WITH_YOUR_CLIENT_ID]&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=read
+Note the requested Scope is set in the URL above. Set this based on what the APIs you need require
+then the result would return back to the callback URL of the website.
+
+curl -X POST \
+  https://www.strava.com/oauth/token \
+  -F client_id=<from https://www.strava.com/settings/api> \
+  -F client_secret=<from https://www.strava.com/settings/api> \
+  -F code=<code from response> \
+  -F grant_type=authorization_code
+  
+# Refresh token
+
+curl -X POST \
+  https://www.strava.com/oauth/token \
+  -F client_id=<from https://www.strava.com/settings/api> \
+  -F client_secret=<from https://www.strava.com/settings/api> \
+  -F refresh_token=<received from the Authenticate call above> \
+  -F grant_type=refresh_token
+  
+# Get Activities
+
+curl -X GET \
+  'https://www.strava.com/api/v3/athlete/activities?before=&after=&page=&per_page=' \
+  -H 'Authorization: Bearer <access_token returned in calls above>' 
