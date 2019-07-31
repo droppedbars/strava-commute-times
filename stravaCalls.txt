@@ -28,3 +28,12 @@ curl -X POST \
 curl -X GET \
   'https://www.strava.com/api/v3/athlete/activities?before=&after=&page=&per_page=' \
   -H 'Authorization: Bearer <access_token returned in calls above>' 
+  
+Important values in the result are:
+ "commute" : false,
+ "start_date" : "2018-05-02T12:15:09Z",
+ "start_date_local" : "2018-05-02T05:15:09Z",
+ "elapsed_time" : 4500,
+ 
+Would need to page through, perhaps iterate by month, or chunks over a year?
+For an actual always running service, it would subscribe to Strava to get notifications of new activities and update data accordingly.
