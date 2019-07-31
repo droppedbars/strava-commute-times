@@ -5,8 +5,8 @@ This project is very much in progress and highly iterative. The initial goal is 
 
 Expect a very slow moving project due to minimal free time!
 
-Phase 1: map out the necessary APIs calls to get the data I want
-Phase 2: implement the calls using Golang, and turn the data into something interesting
-Phase 3: turn phase 2 into APIs
-Phase 4: implement a simple web site to call the APIs and display results
-Phase 5: deal with the authentication redirection from the web site and store the user keys in the backend
+* Phase 1: map out the necessary APIs calls to get the data I want
+* Phase 2: implement the calls using Golang, and turn the data into something interesting
+* Phase 3: turn phase 2 into APIs
+* Phase 4: implement a simple web site to call the APIs and display results
+* Phase 5: deal with the authentication redirection from the web site and store the user keys in the backend
