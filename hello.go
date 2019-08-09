@@ -12,30 +12,47 @@ import (
 	"strconv"
 )
 
+type tokens struct { // not, struct members must be capitized, or they're not visible outside the struct
+	ClientID     int
+	ClientSecret string
+	RefreshToken string
+}
+
 var clientID = flag.Int("clientID", -1, "Client ID found at https://www.strava.com/settings/api")
 var clientSecret = flag.String("clientSecret", "", "Client Secret found at https://www.strava.com/settings/api")
 var refreshToken = flag.String("refreshToken", "", "Refresh token provided by Strava")
 
 func main() {
-	if len(os.Args) > 1 { // if arguments provided we'll use those
+	if len(os.Args) > 1 { // if arguments provided we'll use those to create the tokens file
 		flag.Parse()
+
+		var obj tokens
+		obj.ClientID = *clientID
+		obj.ClientSecret = *clientSecret
+		obj.RefreshToken = *refreshToken
+
+		data, err := json.Marshal(obj)
+		if err != nil {
+			fmt.Println("error:", err)
+		}
+
+		fmt.Println("write to json: ", data)
+
+		ioutil.WriteFile("./tokens.json", data, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 	} else { // read the values from the json file instead
 		data, err := ioutil.ReadFile("./tokens.json")
 		if err != nil {
 			fmt.Print(err)
 		}
 
-		// define data structure
-		type Tokens struct { // not, struct members must be capitized, or they're not visible outside the struct
-			ClientID     int
-			ClientSecret string
-			RefreshToken string
-		}
-
 		fmt.Println("data: ", data)
 
 		// json data
-		var obj Tokens
+		var obj tokens
 
 		// unmarshall it
 		err = json.Unmarshal(data, &obj)
