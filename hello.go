@@ -23,10 +23,11 @@ var clientSecret = flag.String("clientSecret", "", "Client Secret found at https
 var refreshToken = flag.String("refreshToken", "", "Refresh token provided by Strava")
 
 func main() {
+	var obj tokens
+
 	if len(os.Args) > 1 { // if arguments provided we'll use those to create the tokens file
 		flag.Parse()
 
-		var obj tokens
 		obj.ClientID = *clientID
 		obj.ClientSecret = *clientSecret
 		obj.RefreshToken = *refreshToken
@@ -51,9 +52,6 @@ func main() {
 
 		fmt.Println("data: ", data)
 
-		// json data
-		var obj tokens
-
 		// unmarshall it
 		err = json.Unmarshal(data, &obj)
 		if err != nil {
@@ -61,21 +59,16 @@ func main() {
 		}
 
 		fmt.Println("json: ", obj)
-
-		*clientID = obj.ClientID
-		*clientSecret = obj.ClientSecret
-		*refreshToken = obj.RefreshToken
-
 	}
 
-	fmt.Println("clientId: ", *clientID)
-	fmt.Println("clientSecret: ", *clientSecret)
-	fmt.Println("refreshToken: ", *refreshToken)
+	fmt.Println("clientId: ", obj.ClientID)
+	fmt.Println("clientSecret: ", obj.ClientSecret)
+	fmt.Println("refreshToken: ", obj.RefreshToken)
 
 	formData := url.Values{
-		"client_id":     {strconv.Itoa(*clientID)},
-		"client_secret": {*clientSecret},
-		"refresh_token": {*refreshToken},
+		"client_id":     {strconv.Itoa(obj.ClientID)},
+		"client_secret": {obj.ClientSecret},
+		"refresh_token": {obj.RefreshToken},
 		"grant_type":    {"refresh_token"},
 	}
 
@@ -92,4 +85,26 @@ func main() {
 	}
 
 	fmt.Printf("%s\n", string(body))
+
+	var parsed map[string]interface{}
+	err = json.Unmarshal(body, &parsed)
+	if err != nil {
+		log.Fatal(err)
+	}
+	obj.RefreshToken = parsed["refresh_token"].(string)
+
+	fmt.Println("body: ", obj)
+
+	data, err := json.Marshal(obj)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	fmt.Println("write to json: ", data)
+
+	ioutil.WriteFile("./tokens.json", data, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
