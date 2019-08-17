@@ -22,7 +22,7 @@ var clientID = flag.Int("clientID", -1, "Client ID found at https://www.strava.c
 var clientSecret = flag.String("clientSecret", "", "Client Secret found at https://www.strava.com/settings/api")
 var refreshToken = flag.String("refreshToken", "", "Refresh token provided by Strava")
 
-func main() {
+func loadSecrets() tokens {
 	var obj tokens
 
 	if len(os.Args) > 1 { // if arguments provided we'll use those to create the tokens file
@@ -65,6 +65,27 @@ func main() {
 	fmt.Println("clientSecret: ", obj.ClientSecret)
 	fmt.Println("refreshToken: ", obj.RefreshToken)
 
+	return obj
+}
+
+func storeSecrets(obj tokens) {
+	data, err := json.Marshal(obj)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	fmt.Println("write to json: ", data)
+
+	ioutil.WriteFile("./tokens.json", data, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+func main() {
+	obj := loadSecrets()
+
 	formData := url.Values{
 		"client_id":     {strconv.Itoa(obj.ClientID)},
 		"client_secret": {obj.ClientSecret},
@@ -95,16 +116,5 @@ func main() {
 
 	fmt.Println("body: ", obj)
 
-	data, err := json.Marshal(obj)
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-
-	fmt.Println("write to json: ", data)
-
-	ioutil.WriteFile("./tokens.json", data, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	storeSecrets(obj)
 }
