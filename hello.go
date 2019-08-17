@@ -58,6 +58,10 @@ func loadTokens(sec secrets) (tokens, error) {
 
 		fmt.Printf("\nCopy and paste the URL from the browser: ")
 		// need to get them to enter the response URL
+		var responseURL string
+		fmt.Scanln(&responseURL)
+
+		log.Println("User entered URL: ", responseUrl)
 		// parse out the code
 		// make a call to OAuth to authenticate and get the refresh token
 
