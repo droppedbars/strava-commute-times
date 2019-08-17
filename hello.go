@@ -1,8 +1,10 @@
-// An application that if provided a Strava client id, client secret, and refresh token via
-// the command line will use the refresh token to get a new refresh token, and save that and
-// the client id, ad cliet secret to a json file. If the client id, secret and refresh token
-// are not provided in the command line, then the application will attempt to read them
-// from the json file.
+// An application that uses the Strava refresh token to obtain a new one.
+// It reads the application secrets from ./api_client_secrets.json. Use ./api_client_secrets.template.json as a
+// template. Fill it out and rename it to ./api_client_secrets.json.
+// If ./tokens.json is available, it will read the refresh token from there and try to use it. If ./tokens.json
+// is not available, then it will prompt the user to authentication the application via the web browser and
+// obtain the refresh token from that.
+
 package main
 
 import (
