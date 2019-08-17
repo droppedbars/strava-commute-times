@@ -22,7 +22,7 @@ var clientID = flag.Int("clientID", -1, "Client ID found at https://www.strava.c
 var clientSecret = flag.String("clientSecret", "", "Client Secret found at https://www.strava.com/settings/api")
 var refreshToken = flag.String("refreshToken", "", "Refresh token provided by Strava")
 
-func loadSecrets() tokens {
+func loadSecrets() (tokens, error) {
 	var obj tokens
 
 	if len(os.Args) > 1 { // if arguments provided we'll use those to create the tokens file
@@ -34,20 +34,20 @@ func loadSecrets() tokens {
 
 		data, err := json.Marshal(obj)
 		if err != nil {
-			fmt.Println("error:", err)
+			return obj, err
 		}
 
 		fmt.Println("write to json: ", data)
 
 		ioutil.WriteFile("./tokens.json", data, 0644)
 		if err != nil {
-			log.Fatal(err)
+			return obj, err
 		}
 
 	} else { // read the values from the json file instead
 		data, err := ioutil.ReadFile("./tokens.json")
 		if err != nil {
-			fmt.Print(err)
+			return obj, err
 		}
 
 		fmt.Println("data: ", data)
@@ -55,7 +55,7 @@ func loadSecrets() tokens {
 		// unmarshall it
 		err = json.Unmarshal(data, &obj)
 		if err != nil {
-			fmt.Println("error:", err)
+			return obj, err
 		}
 
 		fmt.Println("json: ", obj)
@@ -65,26 +65,30 @@ func loadSecrets() tokens {
 	fmt.Println("clientSecret: ", obj.ClientSecret)
 	fmt.Println("refreshToken: ", obj.RefreshToken)
 
-	return obj
+	return obj, nil
 }
 
-func storeSecrets(obj tokens) {
+func storeSecrets(obj tokens) error {
 	data, err := json.Marshal(obj)
 	if err != nil {
-		fmt.Println("error:", err)
+		return err
 	}
 
 	fmt.Println("write to json: ", data)
 
 	ioutil.WriteFile("./tokens.json", data, 0644)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
+	return nil
 }
 
 func main() {
-	obj := loadSecrets()
+	obj, err := loadSecrets()
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	formData := url.Values{
 		"client_id":     {strconv.Itoa(obj.ClientID)},
@@ -116,5 +120,8 @@ func main() {
 
 	fmt.Println("body: ", obj)
 
-	storeSecrets(obj)
+	err = storeSecrets(obj)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
