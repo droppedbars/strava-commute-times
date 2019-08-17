@@ -20,7 +20,9 @@ import (
 const tokenJSONFileName = "./tokens.json"
 const stravaOAuthPath = "https://www.strava.com/oauth/token"
 
-type tokens struct { // not, struct members must be capitized, or they're not visible outside the struct
+// struct that defines the necessary authorization tokens for Strava
+type tokens struct { 
+	// note: struct members must be capitized or they're not visible outside the struct
 	ClientID     int
 	ClientSecret string
 	RefreshToken string
