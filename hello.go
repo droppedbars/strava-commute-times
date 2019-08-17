@@ -8,7 +8,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -21,24 +20,25 @@ const tokenJSONFileName = "./tokens.json"
 const stravaOAuthPath = "https://www.strava.com/oauth/token"
 
 // struct that defines the necessary authorization tokens for Strava
-type tokens struct { 
+type tokens struct {
 	// note: struct members must be capitized or they're not visible outside the struct
 	ClientID     int
 	ClientSecret string
 	RefreshToken string
 }
 
-// command line flags
-var clientID = flag.Int("clientID", -1, "Client ID found at https://www.strava.com/settings/api")
-var clientSecret = flag.String("clientSecret", "", "Client Secret found at https://www.strava.com/settings/api")
-var refreshToken = flag.String("refreshToken", "", "Refresh token provided by Strava")
-
 // Loads the Strava client id, secret and refresh token either from command line flags, or the json file
 // and return them in a tokens struct.
 func loadSecrets() (tokens, error) {
 	var obj tokens
 
-	if len(os.Args) > 1 { // if arguments provided we'll use those to create the tokens file
+	// if arguments were supplied, those are used to look for the Strava secrets
+	if len(os.Args) > 1 {
+		// command line flags
+		var clientID = flag.Int("clientID", -1, "Client ID found at https://www.strava.com/settings/api")
+		var clientSecret = flag.String("clientSecret", "", "Client Secret found at https://www.strava.com/settings/api")
+		var refreshToken = flag.String("refreshToken", "", "Refresh token provided by Strava")
+
 		flag.Parse()
 
 		obj.ClientID = *clientID
@@ -50,7 +50,7 @@ func loadSecrets() (tokens, error) {
 			return obj, err
 		}
 
-		fmt.Println("write to json: ", data)
+		log.Println("write to json: ", data)
 
 		ioutil.WriteFile(tokenJSONFileName, data, 0644)
 		if err != nil {
@@ -63,7 +63,7 @@ func loadSecrets() (tokens, error) {
 			return obj, err
 		}
 
-		fmt.Println("data: ", data)
+		log.Println("data: ", data)
 
 		// unmarshall it
 		err = json.Unmarshal(data, &obj)
@@ -71,12 +71,12 @@ func loadSecrets() (tokens, error) {
 			return obj, err
 		}
 
-		fmt.Println("json: ", obj)
+		log.Println("json: ", obj)
 	}
 
-	fmt.Println("clientId: ", obj.ClientID)
-	fmt.Println("clientSecret: ", obj.ClientSecret)
-	fmt.Println("refreshToken: ", obj.RefreshToken)
+	log.Println("clientId: ", obj.ClientID)
+	log.Println("clientSecret: ", obj.ClientSecret)
+	log.Println("refreshToken: ", obj.RefreshToken)
 
 	return obj, nil
 }
@@ -88,7 +88,7 @@ func storeSecrets(obj tokens) error {
 		return err
 	}
 
-	fmt.Println("write to json: ", data)
+	log.Println("write to json: ", data)
 
 	ioutil.WriteFile(tokenJSONFileName, data, 0644)
 	if err != nil {
@@ -127,7 +127,11 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	fmt.Printf("%s\n", string(body))
+	// ensure a proper response. Anything other than 200 is an error (user or server)
+	if resp.StatusCode != 200 {
+		log.Fatalf("HTTP Status not 200: %d - %s\n", resp.StatusCode, resp.Status)
+	}
+	log.Printf("http response: %s\n", string(body))
 
 	var parsed map[string]interface{}
 	err = json.Unmarshal(body, &parsed)
@@ -138,7 +142,7 @@ func main() {
 	// update the token struct with the new refresh token from Strava OAuth request
 	obj.RefreshToken = parsed["refresh_token"].(string)
 
-	fmt.Println("body: ", obj)
+	log.Println("parsed body: ", obj)
 
 	err = storeSecrets(obj)
 	if err != nil {
