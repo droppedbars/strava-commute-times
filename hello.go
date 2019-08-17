@@ -1,3 +1,8 @@
+// An application that if provided a Strava client id, client secret, and refresh token via
+// the command line will use the refresh token to get a new refresh token, and save that and
+// the client id, ad cliet secret to a json file. If the client id, secret and refresh token
+// are not provided in the command line, then the application will attempt to read them
+// from the json file.
 package main
 
 import (
@@ -12,6 +17,9 @@ import (
 	"strconv"
 )
 
+const tokenJSONFileName = "./tokens.json"
+const stravaOAuthPath = "https://www.strava.com/oauth/token"
+
 type tokens struct { // not, struct members must be capitized, or they're not visible outside the struct
 	ClientID     int
 	ClientSecret string
@@ -22,6 +30,8 @@ var clientID = flag.Int("clientID", -1, "Client ID found at https://www.strava.c
 var clientSecret = flag.String("clientSecret", "", "Client Secret found at https://www.strava.com/settings/api")
 var refreshToken = flag.String("refreshToken", "", "Refresh token provided by Strava")
 
+// Loads the Strava client id, secret and refresh token either from command line flags, or the json file
+// and return them in a tokens struct.
 func loadSecrets() (tokens, error) {
 	var obj tokens
 
@@ -39,13 +49,13 @@ func loadSecrets() (tokens, error) {
 
 		fmt.Println("write to json: ", data)
 
-		ioutil.WriteFile("./tokens.json", data, 0644)
+		ioutil.WriteFile(tokenJSONFileName, data, 0644)
 		if err != nil {
 			return obj, err
 		}
 
 	} else { // read the values from the json file instead
-		data, err := ioutil.ReadFile("./tokens.json")
+		data, err := ioutil.ReadFile(tokenJSONFileName)
 		if err != nil {
 			return obj, err
 		}
@@ -68,6 +78,7 @@ func loadSecrets() (tokens, error) {
 	return obj, nil
 }
 
+// receives a token struct and stores them in a json file.
 func storeSecrets(obj tokens) error {
 	data, err := json.Marshal(obj)
 	if err != nil {
@@ -76,7 +87,7 @@ func storeSecrets(obj tokens) error {
 
 	fmt.Println("write to json: ", data)
 
-	ioutil.WriteFile("./tokens.json", data, 0644)
+	ioutil.WriteFile(tokenJSONFileName, data, 0644)
 	if err != nil {
 		return err
 	}
@@ -84,12 +95,14 @@ func storeSecrets(obj tokens) error {
 	return nil
 }
 
+// the main execution function.
 func main() {
 	obj, err := loadSecrets()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
+	// create the POST body for Strava OAuth
 	formData := url.Values{
 		"client_id":     {strconv.Itoa(obj.ClientID)},
 		"client_secret": {obj.ClientSecret},
@@ -97,12 +110,14 @@ func main() {
 		"grant_type":    {"refresh_token"},
 	}
 
-	resp, err := http.PostForm("https://www.strava.com/oauth/token", formData)
+	// execute an HTTP POST to Strava OAuth to get new tokens
+	resp, err := http.PostForm(stravaOAuthPath, formData)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer resp.Body.Close()
 
+	// read and parse out the auth tokens from Strava
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
@@ -114,8 +129,10 @@ func main() {
 	var parsed map[string]interface{}
 	err = json.Unmarshal(body, &parsed)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
+
+	// update the token struct with the new refresh token from Strava OAuth request
 	obj.RefreshToken = parsed["refresh_token"].(string)
 
 	fmt.Println("body: ", obj)
