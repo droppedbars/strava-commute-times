@@ -35,6 +35,11 @@ type tokens struct {
 	AccessToken  string
 }
 
+// loads the authentication tokens by trying the tokens.json first. If that fails, then it will
+// provide the user with a URL to enter in the web browser, and ask for the resulting URL back,
+// then parses out the authorization code and makes an OAuth call to get a valid refresh and
+// access token.
+// Returns refreshToken, accessToken, error
 func loadTokens(sec secrets) (string, string, error) {
 	var obj tokens
 	var refreshToken string
@@ -141,6 +146,9 @@ func storeTokens(auth tokens) error {
 	return nil
 }
 
+// Makes the OAuth call to Strava's APIs. Grant type can be either "refresh_token"
+// or it can be "authorization_code". The values will be set appropriately when
+// making the call to Strava
 func stravaOAuthCall(sec secrets, grantType string, auth tokens) (tokens, error) {
 	var formData map[string][]string
 	if grantType == "refresh_token" {
