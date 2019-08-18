@@ -4,7 +4,6 @@
 // If ./tokens.json is available, it will read the refresh token from there and try to use it. If ./tokens.json
 // is not available, then it will prompt the user to authentication the application via the web browser and
 // obtain the refresh token from that.
-
 package main
 
 import (
