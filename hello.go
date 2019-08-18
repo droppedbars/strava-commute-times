@@ -1,10 +1,10 @@
-// An application that uses the Strava refresh token to obtain a new one.
+// package hello uses the Strava refresh token to obtain a new one.
 // It reads the application secrets from ./api_client_secrets.json. Use ./api_client_secrets.template.json as a
 // template. Fill it out and rename it to ./api_client_secrets.json.
 // If ./tokens.json is available, it will read the refresh token from there and try to use it. If ./tokens.json
 // is not available, then it will prompt the user to authentication the application via the web browser and
 // obtain the refresh token from that.
-package main
+package hello
 
 import (
 	"encoding/json"
@@ -34,7 +34,7 @@ type tokens struct {
 	AccessToken  string
 }
 
-// loads the authentication tokens by trying the tokens.json first. If that fails, then it will
+// loadTokens loads the authentication tokens by trying the tokens.json first. If that fails, then it will
 // provide the user with a URL to enter in the web browser, and ask for the resulting URL back,
 // then parses out the authorization code and makes an OAuth call to get a valid refresh and
 // access token.
@@ -97,7 +97,7 @@ func loadTokens(sec secrets) (string, string, error) {
 	return refreshToken, accessToken, nil
 }
 
-// Loads the Strava client id, secret and refresh token either from command line flags, or the json file
+// loadSecrets loads the Strava client id, secret and refresh token either from command line flags, or the json file
 // and return them in a tokens struct.
 func loadSecrets() (secrets, error) {
 	var obj secrets
@@ -128,7 +128,7 @@ func loadSecrets() (secrets, error) {
 	return obj, nil
 }
 
-// receives a token struct and stores them in a json file.
+// storeTokens receives a token struct and stores them in a json file.
 func storeTokens(auth tokens) error {
 	data, err := json.Marshal(auth)
 	if err != nil {
@@ -145,7 +145,7 @@ func storeTokens(auth tokens) error {
 	return nil
 }
 
-// Makes the OAuth call to Strava's APIs. Grant type can be either "refresh_token"
+// stravaOAuthCall calls the Strava's OAuth APIs. Grant type can be either "refresh_token"
 // or it can be "authorization_code". The values will be set appropriately when
 // making the call to Strava
 func stravaOAuthCall(sec secrets, grantType string, auth tokens) (tokens, error) {
@@ -203,7 +203,7 @@ func stravaOAuthCall(sec secrets, grantType string, auth tokens) (tokens, error)
 	return auth, nil
 }
 
-// the main execution function.
+// main execution function.
 func main() {
 	var auth tokens
 
