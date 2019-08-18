@@ -30,17 +30,21 @@ type secrets struct {
 
 // struct that defines the necessary authorization tokens for Strava
 type tokens struct {
+	AuthCode     string
 	RefreshToken string
+	AccessToken  string
 }
 
-func loadTokens(sec secrets) (tokens, error) {
+func loadTokens(sec secrets) (string, string, error) {
 	var obj tokens
+	var refreshToken string
+	var accessToken string
 
 	fileInfo, err := os.Stat(tokenJSONFileName)
 	if (err == nil) && !(fileInfo.IsDir()) { // file exists and is not a directory, so read the auth tokens
 		data, err := ioutil.ReadFile(tokenJSONFileName)
 		if err != nil {
-			return obj, err
+			return refreshToken, accessToken, err
 		}
 
 		log.Println("auth tokens raw data from file: ", data)
@@ -48,31 +52,45 @@ func loadTokens(sec secrets) (tokens, error) {
 		// unmarshall it
 		err = json.Unmarshal(data, &obj)
 		if err != nil {
-			return obj, err
+			return refreshToken, accessToken, err
 		}
-
-		log.Println("auth tokens json: ", obj)
 	} else { // the auth tokens are missing, so we need to get them from the user
 		fmt.Printf("Enter the following into your web browser: \n")
 		fmt.Printf("   http://www.strava.com/oauth/authorize?client_id=%d&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=activity:read_all\n", sec.ClientID)
 
 		fmt.Printf("\nCopy and paste the URL from the browser: ")
 		// need to get them to enter the response URL
-		var responseURL string
-		fmt.Scanln(&responseURL)
+		var responseURLString string
+		fmt.Scanln(&responseURLString)
 
-		log.Println("User entered URL: ", responseUrl)
-		// parse out the code
+		log.Println("User entered URL: ", responseURLString)
+
+		// parse out the code from Strava
+		responseURL, err := url.Parse(responseURLString)
+		if err != nil {
+			return refreshToken, accessToken, err
+		}
+		paramMap, err := url.ParseQuery(responseURL.RawQuery)
+		if err != nil {
+			return refreshToken, accessToken, err
+		}
+		code, codeExists := paramMap["code"]
+		if !codeExists {
+			return refreshToken, accessToken, fmt.Errorf("The code key could not be found in the supplied URL: %s", responseURLString)
+		}
+		obj.AuthCode = code[0]
+		log.Println("Auth code is: ", obj.AuthCode)
 		// make a call to OAuth to authenticate and get the refresh token
 
-		obj.RefreshToken = "temp value"
-
-		return obj, fmt.Errorf("temp error, code path not completed")
+		obj, err = stravaOAuthCall(sec, "authorization_code", obj)
 	}
 
-	log.Println("refreshToken: ", obj.RefreshToken)
+	refreshToken = obj.RefreshToken
+	accessToken = obj.AccessToken
+	log.Println("refreshToken: ", refreshToken)
+	log.Println("accessToken: ", accessToken)
 
-	return obj, nil
+	return refreshToken, accessToken, nil
 }
 
 // Loads the Strava client id, secret and refresh token either from command line flags, or the json file
@@ -123,29 +141,30 @@ func storeTokens(auth tokens) error {
 	return nil
 }
 
-// the main execution function.
-func main() {
-	sec, err := loadSecrets()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	auth, err := loadTokens(sec)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// create the POST body for Strava OAuth
-	formData := url.Values{
-		"client_id":     {strconv.Itoa(sec.ClientID)},
-		"client_secret": {sec.ClientSecret},
-		"refresh_token": {auth.RefreshToken},
-		"grant_type":    {"refresh_token"},
+func stravaOAuthCall(sec secrets, grantType string, auth tokens) (tokens, error) {
+	var formData map[string][]string
+	if grantType == "refresh_token" {
+		formData = url.Values{
+			"client_id":     {strconv.Itoa(sec.ClientID)},
+			"client_secret": {sec.ClientSecret},
+			"refresh_token": {auth.RefreshToken},
+			"grant_type":    {"refresh_token"},
+		}
+	} else if grantType == "authorization_code" {
+		formData = url.Values{
+			"client_id":     {strconv.Itoa(sec.ClientID)},
+			"client_secret": {sec.ClientSecret},
+			"code":          {auth.AuthCode},
+			"grant_type":    {"authorization_code"},
+		}
+	} else { // unexpected grant_type, so fail
+		return auth, fmt.Errorf("unexpected grant_type")
 	}
 
 	// execute an HTTP POST to Strava OAuth to get new tokens
 	resp, err := http.PostForm(stravaOAuthPath, formData)
 	if err != nil {
-		log.Fatalln(err)
+		return auth, err
 	}
 	defer resp.Body.Close()
 
@@ -153,26 +172,47 @@ func main() {
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Fatalln(err)
+		return auth, err
 	}
 
 	// ensure a proper response. Anything other than 200 is an error (user or server)
 	if resp.StatusCode != 200 {
-		log.Fatalf("HTTP Status not 200: %d - %s\n", resp.StatusCode, resp.Status)
+		return auth, fmt.Errorf("HTTP Status not 200: %d - %s", resp.StatusCode, resp.Status)
 	}
 	log.Printf("OAuth http response: %s\n", string(body))
 
 	var parsed map[string]interface{}
 	err = json.Unmarshal(body, &parsed)
 	if err != nil {
-		log.Fatalln(err)
+		return auth, err
 	}
 
 	// update the token struct with the new refresh token from Strava OAuth request
 	auth.RefreshToken = parsed["refresh_token"].(string)
+	auth.AccessToken = parsed["access_token"].(string)
 
 	log.Println("parsed body from OAuth call: ", auth)
 
+	return auth, nil
+}
+
+// the main execution function.
+func main() {
+	var auth tokens
+
+	sec, err := loadSecrets()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	refreshToken, accessToken, err := loadTokens(sec)
+	auth.RefreshToken = refreshToken
+	auth.AccessToken = accessToken
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	auth, err = stravaOAuthCall(sec, "refresh_token", auth)
 	err = storeTokens(auth)
 	if err != nil {
 		log.Fatalln(err)
