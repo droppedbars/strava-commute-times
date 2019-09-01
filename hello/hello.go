@@ -1,10 +1,10 @@
-// package hello uses the Strava refresh token to obtain a new one.
+// Package uses the Strava refresh token to obtain a new one.
 // It reads the application secrets from ./api_client_secrets.json. Use ./api_client_secrets.template.json as a
 // template. Fill it out and rename it to ./api_client_secrets.json.
 // If ./tokens.json is available, it will read the refresh token from there and try to use it. If ./tokens.json
 // is not available, then it will prompt the user to authentication the application via the web browser and
 // obtain the refresh token from that.
-package hello
+package main
 
 import (
 	"encoding/json"
@@ -41,7 +41,7 @@ type tokens struct {
 // Returns refreshToken, accessToken, error
 func loadTokens(sec secrets) (string, string, error) {
 	var obj tokens
-	var refreshToken string
+	var refresghToken string
 	var accessToken string
 
 	fileInfo, err := os.Stat(tokenJSONFileName)
