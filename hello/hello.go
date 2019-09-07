@@ -41,7 +41,7 @@ type tokens struct {
 // Returns refreshToken, accessToken, error
 func loadTokens(sec secrets) (string, string, error) {
 	var obj tokens
-	var refresghToken string
+	var refreshToken string
 	var accessToken string
 
 	fileInfo, err := os.Stat(tokenJSONFileName)
