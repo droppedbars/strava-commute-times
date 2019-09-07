@@ -44,6 +44,10 @@ func loadTokens(sec secrets) (string, string, error) {
 	var refreshToken string
 	var accessToken string
 
+	if sec.ClientID == 0 || sec.ClientSecret == "" {
+		return refreshToken, accessToken, fmt.Errorf("loadTokens must have non-nil secrets")
+	}
+
 	fileInfo, err := os.Stat(tokenJSONFileName)
 	if (err == nil) && !(fileInfo.IsDir()) { // file exists and is not a directory, so read the auth tokens
 		data, err := ioutil.ReadFile(tokenJSONFileName)
@@ -97,7 +101,7 @@ func loadTokens(sec secrets) (string, string, error) {
 	return refreshToken, accessToken, nil
 }
 
-// loadSecrets loads the Strava client id, secret and refresh token either from command line flags, or the json file
+// loadSecrets loads the Strava client id, secret and refresh token from the json file
 // and return them in a tokens struct.
 func loadSecrets() (secrets, error) {
 	var obj secrets
