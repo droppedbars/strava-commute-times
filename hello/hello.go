@@ -228,4 +228,6 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	outputActivityStartStop(2685947039, auth.AccessToken)
 }
