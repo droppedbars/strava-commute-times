@@ -230,4 +230,8 @@ func main() {
 	}
 
 	outputActivityStartStop(2685947039, auth.AccessToken)
+
+	//"before": 1577865599, //December 31, 2019 11:59:59 PM GMT-08:00
+	//"after": 1546329601, //January 1, 2019 12:00:01 AM GMT-08:00
+	getActivities(1546329601, 1577865599, auth.AccessToken)
 }
