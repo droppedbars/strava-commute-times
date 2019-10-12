@@ -75,6 +75,8 @@ func stravaAPIGetArray(url string, params map[string]uint64, accessToken string)
 }
 
 func getActivities(startDate uint64, endDate uint64, accessToken string) {
+	commute := 0.0
+	total := 0.0
 
 	for i := 1; ; i++ { // strava pages start at 1
 		activitiyListParams := map[string]uint64{
@@ -92,8 +94,18 @@ func getActivities(startDate uint64, endDate uint64, accessToken string) {
 		//log.Println("\n\nOne response: ", arrayJSONResponse[1])
 		for j := 0; j < len(arrayJSONResponse); j++ {
 			log.Println("Activity Name: ", arrayJSONResponse[j]["name"].(string))
+			if arrayJSONResponse[j]["type"] == "Ride" || arrayJSONResponse[j]["type"] == "EBikeRide" {
+				distance := arrayJSONResponse[j]["distance"].(float64) / 1000 // convert m to km
+				total += distance
+				if arrayJSONResponse[j]["commute"].(bool) == true {
+					commute += distance
+				}
+			}
 		}
 	}
+	log.Printf("Total Distance (km): %.1f\n", total)
+	log.Printf("Total Commute (km): %.1f, %.1f%%\n", commute, (commute/total)*100)
+	log.Printf("Total Pleasure (km): %.1f, %.1f%%\n", total-commute, ((total-commute)/total)*100)
 }
 
 func outputActivityStartStop(id uint64, accessToken string) {
