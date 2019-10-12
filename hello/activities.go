@@ -75,17 +75,25 @@ func stravaAPIGetArray(url string, params map[string]uint64, accessToken string)
 }
 
 func getActivities(startDate uint64, endDate uint64, accessToken string) {
-	activitiyListParams := map[string]uint64{
-		"before": endDate,
-		"after":  startDate,
-		//"page": 1,
-		"per_page": 2,
-	}
-	arrayJSONResponse := stravaAPIGetArray(stravaListActivitiesPath, activitiyListParams, accessToken)
 
-	log.Println("API call response: ", arrayJSONResponse)
-	log.Println("\n\nOne response: ", arrayJSONResponse[1])
-	log.Println("\n\nOne response's name: ", arrayJSONResponse[1]["name"].(string))
+	for i := 1; ; i++ { // strava pages start at 1
+		activitiyListParams := map[string]uint64{
+			"before":   endDate,
+			"after":    startDate,
+			"page":     uint64(i),
+			"per_page": 200,
+		}
+		arrayJSONResponse := stravaAPIGetArray(stravaListActivitiesPath, activitiyListParams, accessToken)
+		if len(arrayJSONResponse) == 0 { // empty response, so not more data
+			break
+		}
+		log.Println("Page: ", i)
+		//log.Println("API call response page: "+strconv.Itoa(i)+": ", arrayJSONResponse)
+		//log.Println("\n\nOne response: ", arrayJSONResponse[1])
+		for j := 0; j < len(arrayJSONResponse); j++ {
+			log.Println("Activity Name: ", arrayJSONResponse[j]["name"].(string))
+		}
+	}
 }
 
 func outputActivityStartStop(id uint64, accessToken string) {
