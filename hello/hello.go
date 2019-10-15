@@ -208,6 +208,8 @@ func stravaOAuthCall(sec secrets, grantType string, auth tokens) (tokens, error)
 	return auth, nil
 }
 
+// outputActivityStartStop will take the id of a Strava activity and print out the times
+// the activity started and stopped. It uses the accessToken to make a API call to Strava.
 func outputActivityStartStop(id uint64, accessToken string) {
 	JSONResponse := stravaAPIGetJSON(stravaGetActivityPath+strconv.FormatUint(id, 10), nil, accessToken)
 
@@ -216,7 +218,10 @@ func outputActivityStartStop(id uint64, accessToken string) {
 	log.Println("activity name: ", name)
 }
 
-func outputDistanceTotals(allActivities []map[string]interface{}) (float64, float64) {
+// activityDistanceTotals takes an array of Strava activities (in the format returned by Strava)
+// and returns the total distance traveled and the total commute distance traveled. Both are
+// provided in kilometers.
+func ridingDistanceTotals(allActivities []map[string]interface{}) (float64, float64) {
 	commute := 0.0
 	total := 0.0
 
@@ -233,7 +238,9 @@ func outputDistanceTotals(allActivities []map[string]interface{}) (float64, floa
 	return total, commute
 }
 
-func loadActivities(startDate uint64, endDate uint64, accessToken string) []map[string]interface{} {
+// getActivities returns an array of Strava activities given a date range and accessToken.
+// The dates are provided as time since epoc.
+func getRidingActivities(startDate uint64, endDate uint64, accessToken string) []map[string]interface{} {
 	var allActivities []map[string]interface{}
 
 	for i := 1; ; i++ { // strava pages start at 1
@@ -281,10 +288,11 @@ func main() {
 
 	//"before": 1577865599, //December 31, 2019 11:59:59 PM GMT-08:00
 	//"after": 1546329601, //January 1, 2019 12:00:01 AM GMT-08:
+	year := "2019" // later to be replaced with user input
 	var startTime time.Time
 	var endTime time.Time
-	startTime, err = time.Parse(time.RFC3339, "2019-01-01T12:00:01-08:00")
-	endTime, err = time.Parse(time.RFC3339, "2019-12-31T11:59:59-08:00")
+	startTime, err = time.Parse(time.RFC3339, year+"-01-01T12:00:01-08:00")
+	endTime, err = time.Parse(time.RFC3339, year+"-12-31T11:59:59-08:00")
 
 	if err != nil {
 		log.Fatalln(err)
@@ -293,10 +301,9 @@ func main() {
 	log.Println("Start Time: ", startTime)
 	log.Println("End Time: ", endTime)
 
-	allActivities := loadActivities(uint64(startTime.Unix()), uint64(endTime.Unix()), auth.AccessToken)
-	total, commute := outputDistanceTotals(allActivities)
+	allActivities := getRidingActivities(uint64(startTime.Unix()), uint64(endTime.Unix()), auth.AccessToken)
+	total, commute := ridingDistanceTotals(allActivities)
 	log.Printf("Total Distance (km): %.1f\n", total)
 	log.Printf("Total Commute (km): %.1f, %.1f%%\n", commute, (commute/total)*100)
 	log.Printf("Total Pleasure (km): %.1f, %.1f%%\n", total-commute, ((total-commute)/total)*100)
-
 }

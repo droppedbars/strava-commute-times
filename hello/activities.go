@@ -13,6 +13,11 @@ const stravaBasePath = "https://www.strava.com/api/v3/"
 const stravaGetActivityPath = stravaBasePath + "activities/"
 const stravaListActivitiesPath = stravaBasePath + "athlete/activities/"
 
+// stravaAPIGetResponse makes a call to a Strava GET API.
+//  url is the URL to the API
+//  params is a map of key/value parameters to provide to the API
+//  accessToken is the Strava access token.
+// TODO: params should handle parameters that are not uint64
 func stravaAPIGetResponse(url string, params map[string]uint64, accessToken string) []byte {
 	log.Println("Base API call URL ", url)
 
@@ -50,6 +55,9 @@ func stravaAPIGetResponse(url string, params map[string]uint64, accessToken stri
 	return body
 }
 
+// stravaAPIGetArray returns the Strava API response which is expected to be a json result.
+//  url is the API url, params is the key/value map of paramters, accessToken is the Strava access token.
+// TODO: params should handle parameters that are not uint64
 func stravaAPIGetJSON(url string, params map[string]uint64, accessToken string) map[string]interface{} {
 	rawResponse := stravaAPIGetResponse(url, params, accessToken)
 
@@ -62,6 +70,10 @@ func stravaAPIGetJSON(url string, params map[string]uint64, accessToken string) 
 	return parsed
 }
 
+// stravaAPIGetArray returns the Strava API response which is expected to be an array of json results.
+//  url is the API url, params is the key/value map of paramters, accessToken is the Strava access token.
+// TODO: params should handle parameters that are not uint64
+// TODO: need to ensure it gracefully handles API calls that do not return arrays of json
 func stravaAPIGetArray(url string, params map[string]uint64, accessToken string) []map[string]interface{} {
 	rawResponse := stravaAPIGetResponse(url, params, accessToken)
 
