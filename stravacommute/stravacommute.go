@@ -7,6 +7,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"strconv"
 	"time"
@@ -14,6 +15,8 @@ import (
 
 const annualCommuteKm = 5875 // assumes 25km/day, 5 days a week, 5 weeks of no riding per year
 const hoursInYear = 24 * 365 // simplistic, ignores leap years
+
+var flagYear = flag.Int("year", time.Now().Year(), "Year to run the commute numbers for. Defaults to current year.")
 
 // outputActivityStartStop will take the id of a Strava activity and print out the times
 // the activity started and stopped. It uses the accessToken to make a API call to Strava.
@@ -91,9 +94,11 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	flag.Parse()
+
 	//outputActivityStartStop(2685947039, auth.AccessToken)
 
-	year := "2019" // later to be replaced with user input
+	year := strconv.Itoa(*flagYear)
 	var startTime time.Time
 	var endTime time.Time
 	startTime, err = time.Parse(time.RFC3339, year+"-01-01T12:00:01-08:00")
@@ -109,13 +114,19 @@ func main() {
 	allActivities := getRidingActivities(uint64(startTime.Unix()), uint64(endTime.Unix()), auth.AccessToken)
 	total, commute := ridingDistanceTotals(allActivities)
 	percentageOfYear := 1.0
+	fullYear := true
 	if endTime.Unix() > time.Now().Unix() {
 		percentageOfYear = time.Since(startTime).Hours() / hoursInYear
+		fullYear = false
 	}
 	log.Printf("Total Distance (km): %.1f\n", total)
-	log.Printf("  Estimated end of year distance (km): %.1f\n", total/percentageOfYear)
+	if !fullYear {
+		log.Printf("  Estimated end of year distance (km): %.1f\n", total/percentageOfYear)
+	}
 	log.Printf("Total Commute (km): %.1f, %.1f%%\n", commute, (commute/total)*100)
 	log.Printf("  Percentage of commute by bike: %.1f%%\n", (commute/annualCommuteKm)*100)
-	log.Printf("  Estimated percentage of commute by bike for year: %.1f%%\n", (commute/annualCommuteKm/percentageOfYear)*100)
+	if !fullYear {
+		log.Printf("  Estimated percentage of commute by bike for year: %.1f%%\n", (commute/annualCommuteKm/percentageOfYear)*100)
+	}
 	log.Printf("Total Pleasure (km): %.1f, %.1f%%\n", total-commute, ((total-commute)/total)*100)
 }
