@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+const annualCommuteKm = 5875 // assumes 25km/day, 5 days a week, 5 weeks of no riding per year
+const hoursInYear = 24 * 365 // simplistic, ignores leap years
+
 // outputActivityStartStop will take the id of a Strava activity and print out the times
 // the activity started and stopped. It uses the accessToken to make a API call to Strava.
 func outputActivityStartStop(id uint64, accessToken string) {
@@ -90,8 +93,6 @@ func main() {
 
 	//outputActivityStartStop(2685947039, auth.AccessToken)
 
-	//"before": 1577865599, //December 31, 2019 11:59:59 PM GMT-08:00
-	//"after": 1546329601, //January 1, 2019 12:00:01 AM GMT-08:
 	year := "2019" // later to be replaced with user input
 	var startTime time.Time
 	var endTime time.Time
@@ -107,7 +108,14 @@ func main() {
 
 	allActivities := getRidingActivities(uint64(startTime.Unix()), uint64(endTime.Unix()), auth.AccessToken)
 	total, commute := ridingDistanceTotals(allActivities)
+	percentageOfYear := 1.0
+	if endTime.Unix() > time.Now().Unix() {
+		percentageOfYear = time.Since(startTime).Hours() / hoursInYear
+	}
 	log.Printf("Total Distance (km): %.1f\n", total)
+	log.Printf("  Estimated end of year distance (km): %.1f\n", total/percentageOfYear)
 	log.Printf("Total Commute (km): %.1f, %.1f%%\n", commute, (commute/total)*100)
+	log.Printf("  Percentage of commute by bike: %.1f%%\n", (commute/annualCommuteKm)*100)
+	log.Printf("  Estimated percentage of commute by bike for year: %.1f%%\n", (commute/annualCommuteKm/percentageOfYear)*100)
 	log.Printf("Total Pleasure (km): %.1f, %.1f%%\n", total-commute, ((total-commute)/total)*100)
 }
