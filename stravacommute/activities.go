@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -17,7 +18,7 @@ const stravaListActivitiesPath = stravaBasePath + "athlete/activities/"
 //  params is a map of key/value parameters to provide to the API
 //  accessToken is the Strava access token.
 // TODO: params should handle parameters that are not uint64
-func stravaAPIGetResponse(url string, params map[string]uint64, accessToken string) []byte {
+func stravaAPIGetResponse(url string, params map[string]uint64, accessToken string) ([]byte, error) {
 	DEBUG.Println("Base API call URL ", url)
 
 	client := http.Client{
@@ -35,52 +36,57 @@ func stravaAPIGetResponse(url string, params map[string]uint64, accessToken stri
 
 	resp, err := client.Do(request)
 	if err != nil {
-		//return auth, err
-		ERROR.Fatalln("Unable to access the activities get: ", err)
+		return nil, fmt.Errorf("Unable to access the activities get: %s", err)
 	}
 	defer resp.Body.Close()
 
 	// ensure a proper response. Anything other than 200 is an error (user or server)
 	if resp.StatusCode != 200 {
-		ERROR.Fatalf("HTTP Status not 200: %d - %s", resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("HTTP Status not 200: %d - %s", resp.StatusCode, resp.Status)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		ERROR.Fatalln("Error reading body: ", err)
+		return nil, fmt.Errorf("Error reading body: %s", err)
 	}
 
 	TRACE.Printf("activity body: %s\n", body) // dumps the whole resonse
-	return body
+	return body, nil
 }
 
 // stravaAPIGetArray returns the Strava API response which is expected to be a json result.
 //  url is the API url, params is the key/value map of paramters, accessToken is the Strava access token.
 // TODO: params should handle parameters that are not uint64
-func stravaAPIGetJSON(url string, params map[string]uint64, accessToken string) map[string]interface{} {
-	rawResponse := stravaAPIGetResponse(url, params, accessToken)
-
-	var parsed map[string]interface{}
-	err := json.Unmarshal(rawResponse, &parsed)
+func stravaAPIGetJSON(url string, params map[string]uint64, accessToken string) (map[string]interface{}, error) {
+	rawResponse, err := stravaAPIGetResponse(url, params, accessToken)
 	if err != nil {
-		ERROR.Fatalln("Unable to parse the response: ", err)
+		return nil, err
 	}
 
-	return parsed
+	var parsed map[string]interface{}
+	err = json.Unmarshal(rawResponse, &parsed)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse the response: %s", err)
+	}
+
+	return parsed, nil
 }
 
 // stravaAPIGetArray returns the Strava API response which is expected to be an array of json results.
 //  url is the API url, params is the key/value map of paramters, accessToken is the Strava access token.
 // TODO: params should handle parameters that are not uint64
 // TODO: need to ensure it gracefully handles API calls that do not return arrays of json
-func stravaAPIGetArray(url string, params map[string]uint64, accessToken string) []map[string]interface{} {
-	rawResponse := stravaAPIGetResponse(url, params, accessToken)
-
-	var parsed []map[string]interface{}
-	err := json.Unmarshal(rawResponse, &parsed)
+func stravaAPIGetArray(url string, params map[string]uint64, accessToken string) ([]map[string]interface{}, error) {
+	rawResponse, err := stravaAPIGetResponse(url, params, accessToken)
 	if err != nil {
-		ERROR.Fatalln("Unable to parse the response: ", err)
+		return nil, err
 	}
 
-	return parsed
+	var parsed []map[string]interface{}
+	err = json.Unmarshal(rawResponse, &parsed)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse the response: %s", err)
+	}
+
+	return parsed, nil
 }

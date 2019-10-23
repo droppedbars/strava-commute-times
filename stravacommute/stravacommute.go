@@ -21,7 +21,10 @@ var flagYear = flag.Int("year", time.Now().Year(), "Year to run the commute numb
 // outputActivityStartStop will take the id of a Strava activity and print out the times
 // the activity started and stopped. It uses the accessToken to make a API call to Strava.
 func outputActivityStartStop(id uint64, accessToken string) {
-	JSONResponse := stravaAPIGetJSON(stravaGetActivityPath+strconv.FormatUint(id, 10), nil, accessToken)
+	JSONResponse, err := stravaAPIGetJSON(stravaGetActivityPath+strconv.FormatUint(id, 10), nil, accessToken)
+	if err != nil {
+		ERROR.Fatal(err)
+	}
 
 	name := JSONResponse["name"].(string)
 
@@ -60,7 +63,10 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 			"page":     uint64(i),
 			"per_page": 200,
 		}
-		arrayJSONResponse := stravaAPIGetArray(stravaListActivitiesPath, activitiyListParams, accessToken)
+		arrayJSONResponse, err := stravaAPIGetArray(stravaListActivitiesPath, activitiyListParams, accessToken)
+		if err != nil {
+			ERROR.Fatal(err)
+		}
 		if len(arrayJSONResponse) == 0 { // empty response, so no more data
 			break
 		}
