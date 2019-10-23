@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -49,9 +48,8 @@ func loadTokens(sec secrets) (string, string, error) {
 			return refreshToken, accessToken, err
 		}
 
-		log.Println("auth tokens raw data from file: ", data)
+		DEBUG.Println("auth tokens raw data from file: ", data)
 
-		// unmarshall it
 		err = json.Unmarshal(data, &obj)
 		if err != nil {
 			return refreshToken, accessToken, err
@@ -65,7 +63,7 @@ func loadTokens(sec secrets) (string, string, error) {
 		var responseURLString string
 		fmt.Scanln(&responseURLString)
 
-		log.Println("User entered URL: ", responseURLString)
+		INFO.Println("User entered URL: ", responseURLString)
 
 		// parse out the code from Strava
 		responseURL, err := url.Parse(responseURLString)
@@ -81,16 +79,16 @@ func loadTokens(sec secrets) (string, string, error) {
 			return refreshToken, accessToken, fmt.Errorf("The code key could not be found in the supplied URL: %s", responseURLString)
 		}
 		obj.AuthCode = code[0]
-		log.Println("Auth code is: ", obj.AuthCode)
-		// make a call to OAuth to authenticate and get the refresh token
+		DEBUG.Println("Auth code is: ", obj.AuthCode)
 
+		// make a call to OAuth to authenticate and get the refresh token
 		obj, err = stravaOAuthCall(sec, "authorization_code", obj)
 	}
 
 	refreshToken = obj.RefreshToken
 	accessToken = obj.AccessToken
-	log.Println("refreshToken: ", refreshToken)
-	log.Println("accessToken: ", accessToken)
+	DEBUG.Println("refreshToken: ", refreshToken)
+	DEBUG.Println("accessToken: ", accessToken)
 
 	return refreshToken, accessToken, nil
 }
@@ -110,7 +108,7 @@ func loadSecrets() (secrets, error) {
 		return obj, err
 	}
 
-	log.Println("secrets raw data from file: ", data)
+	DEBUG.Println("secrets raw data from file: ", data)
 
 	// unmarshall it
 	err = json.Unmarshal(data, &obj)
@@ -118,10 +116,10 @@ func loadSecrets() (secrets, error) {
 		return obj, err
 	}
 
-	log.Println("secrets json: ", obj)
+	DEBUG.Println("secrets json: ", obj)
 
-	log.Println("clientId: ", obj.ClientID)
-	log.Println("clientSecret: ", obj.ClientSecret)
+	DEBUG.Println("clientId: ", obj.ClientID)
+	DEBUG.Println("clientSecret: ", obj.ClientSecret)
 
 	return obj, nil
 }
@@ -133,7 +131,7 @@ func storeTokens(auth tokens) error {
 		return err
 	}
 
-	log.Println("data to write to json: ", data)
+	DEBUG.Println("data to write to json: ", data)
 
 	ioutil.WriteFile(tokenJSONFileName, data, 0644)
 	if err != nil {
@@ -184,7 +182,7 @@ func stravaOAuthCall(sec secrets, grantType string, auth tokens) (tokens, error)
 	if resp.StatusCode != 200 {
 		return auth, fmt.Errorf("HTTP Status not 200: %d - %s", resp.StatusCode, resp.Status)
 	}
-	log.Printf("OAuth http response: %s\n", string(body))
+	DEBUG.Printf("OAuth http response: %s\n", string(body))
 
 	var parsed map[string]interface{}
 	err = json.Unmarshal(body, &parsed)
@@ -196,7 +194,7 @@ func stravaOAuthCall(sec secrets, grantType string, auth tokens) (tokens, error)
 	auth.RefreshToken = parsed["refresh_token"].(string)
 	auth.AccessToken = parsed["access_token"].(string)
 
-	log.Println("parsed body from OAuth call: ", auth)
+	DEBUG.Println("parsed body from OAuth call: ", auth)
 
 	return auth, nil
 }

@@ -9,7 +9,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 )
@@ -26,7 +25,7 @@ func outputActivityStartStop(id uint64, accessToken string) {
 
 	name := JSONResponse["name"].(string)
 
-	log.Println("activity name: ", name)
+	fmt.Println("activity name: ", name)
 }
 
 // activityDistanceTotals takes an array of Strava activities (in the format returned by Strava)
@@ -37,7 +36,7 @@ func ridingDistanceTotals(allActivities []map[string]interface{}) (float64, floa
 	total := 0.0
 
 	for j := 0; j < len(allActivities); j++ {
-		//log.Println("Activity Name: ", allActivities[j]["name"].(string))
+		TRACE.Println("Activity Name: ", allActivities[j]["name"].(string))
 		if allActivities[j]["type"] == "Ride" || allActivities[j]["type"] == "EBikeRide" {
 			distance := allActivities[j]["distance"].(float64) / 1000 // convert m to km
 			total += distance
@@ -66,9 +65,9 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 			break
 		}
 		allActivities = append(allActivities, arrayJSONResponse...)
-		//log.Println("Page: ", i)
-		//log.Println("API call response page: "+strconv.Itoa(i)+": ", arrayJSONResponse)
-		//log.Println("\n\nOne response: ", arrayJSONResponse[1])
+		DEBUG.Println("Page: ", i)
+		TRACE.Println("API call response page: "+strconv.Itoa(i)+": ", arrayJSONResponse)
+		TRACE.Println("\n\nOne response: ", arrayJSONResponse[1])
 	}
 	return allActivities
 }
@@ -79,20 +78,20 @@ func main() {
 
 	sec, err := loadSecrets()
 	if err != nil {
-		log.Fatalln(err)
+		ERROR.Fatalln(err)
 	}
 	refreshToken, accessToken, err := loadTokens(sec)
 	auth.RefreshToken = refreshToken
 	auth.AccessToken = accessToken
 
 	if err != nil {
-		log.Fatalln(err)
+		ERROR.Fatalln(err)
 	}
 
 	auth, err = stravaOAuthCall(sec, "refresh_token", auth)
 	err = storeTokens(auth)
 	if err != nil {
-		log.Fatalln(err)
+		ERROR.Fatalln(err)
 	}
 
 	flag.Parse()
@@ -107,11 +106,11 @@ func main() {
 	endTime, err = time.Parse(time.RFC3339, year+"-12-31T11:59:59-08:00")
 
 	if err != nil {
-		log.Fatalln(err)
+		ERROR.Fatalln(err)
 	}
 
-	log.Println("Start Time: ", startTime)
-	log.Println("End Time: ", endTime)
+	INFO.Println("Commute time range start: ", startTime)
+	INFO.Println("Commute time range end: ", endTime)
 
 	allActivities := getRidingActivities(uint64(startTime.Unix()), uint64(endTime.Unix()), auth.AccessToken)
 	total, commute := ridingDistanceTotals(allActivities)
