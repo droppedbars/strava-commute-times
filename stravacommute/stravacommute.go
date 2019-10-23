@@ -8,6 +8,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -98,6 +99,7 @@ func main() {
 
 	//outputActivityStartStop(2685947039, auth.AccessToken)
 
+	// TODO too early of a year such as 1900 or late such as 9999 will return a 400 error from Strava. Best to parse it out early.
 	year := strconv.Itoa(*flagYear)
 	var startTime time.Time
 	var endTime time.Time
@@ -119,14 +121,14 @@ func main() {
 		percentageOfYear = time.Since(startTime).Hours() / hoursInYear
 		fullYear = false
 	}
-	log.Printf("Total Distance (km): %.1f\n", total)
+	fmt.Printf("Total Distance (km): %.1f\n", total)
 	if !fullYear {
-		log.Printf("  Estimated end of year distance (km): %.1f\n", total/percentageOfYear)
+		fmt.Printf("  Estimated end of year distance (km): %.1f\n", total/percentageOfYear)
 	}
-	log.Printf("Total Commute (km): %.1f, %.1f%%\n", commute, (commute/total)*100)
-	log.Printf("  Percentage of commute by bike: %.1f%%\n", (commute/annualCommuteKm)*100)
+	fmt.Printf("Total Commute (km): %.1f, %.1f%%\n", commute, (commute/total)*100)
+	fmt.Printf("  Percentage of commute by bike: %.1f%%\n", (commute/annualCommuteKm)*100)
 	if !fullYear {
-		log.Printf("  Estimated percentage of commute by bike for year: %.1f%%\n", (commute/annualCommuteKm/percentageOfYear)*100)
+		fmt.Printf("  Estimated percentage of commute by bike for year: %.1f%%\n", (commute/annualCommuteKm/percentageOfYear)*100)
 	}
-	log.Printf("Total Pleasure (km): %.1f, %.1f%%\n", total-commute, ((total-commute)/total)*100)
+	fmt.Printf("Total Pleasure (km): %.1f, %.1f%%\n", total-commute, ((total-commute)/total)*100)
 }
