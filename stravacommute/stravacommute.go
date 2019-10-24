@@ -80,6 +80,8 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 
 // main execution function.
 func main() {
+	setLogging(true, debugLevel)
+
 	var auth tokens
 
 	sec, err := loadSecrets()
