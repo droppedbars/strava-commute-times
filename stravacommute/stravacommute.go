@@ -145,6 +145,7 @@ func graphResults(results []stravaDistances) {
 	barc.XRange.Label = "Year"
 	barc.XRange.TicSetting.Format = ticFormat
 	barc.YRange.Label = "Distance (km)"
+	barc.YRange.TicSetting.Format = ticFormat
 
 	barc.AddDataPair("Commutes", years, commutes, red)
 	barc.AddDataPair("Pleasure", years, pleasure, green)
