@@ -20,6 +20,12 @@ const epoch = 2009           // when strava started, so there should never be da
 var flagYear1 = flag.Int("startYear", time.Now().Year(), "First year to run the commute numbers for. Defaults to current year.")
 var flagYear2 = flag.Int("endYear", time.Now().Year(), "Last year to run the commute numbers for. Defaults to current year.")
 
+type stravaDistances struct {
+	year     int
+	commute  float64
+	pleasure float64
+}
+
 // outputActivityStartStop will take the id of a Strava activity and print out the times
 // the activity started and stopped. It uses the accessToken to make a API call to Strava.
 func outputActivityStartStop(id uint64, accessToken string) {
@@ -124,6 +130,7 @@ func main() {
 
 	//outputActivityStartStop(2685947039, auth.AccessToken)
 
+	var multiYears []stravaDistances
 	for i := year1; i <= year2; i++ {
 		year := strconv.Itoa(i)
 
@@ -141,13 +148,16 @@ func main() {
 
 		allActivities := getRidingActivities(uint64(startTime.Unix()), uint64(endTime.Unix()), auth.AccessToken)
 		total, commute := ridingDistanceTotals(allActivities)
+		distances := stravaDistances{year: i, commute: commute, pleasure: total - commute}
+		multiYears = append(multiYears, distances)
+
 		percentageOfYear := 1.0
 		fullYear := true
 		if endTime.Unix() > time.Now().Unix() {
 			percentageOfYear = time.Since(startTime).Hours() / hoursInYear
 			fullYear = false
 		}
-		fmt.Println(year)
+		fmt.Println("\n" + year)
 		fmt.Printf("Total Distance (km): %.1f\n", total)
 		if !fullYear {
 			fmt.Printf("  Estimated end of year distance (km): %.1f\n", total/percentageOfYear)
@@ -159,4 +169,5 @@ func main() {
 		}
 		fmt.Printf("Total Pleasure (km): %.1f, %.1f%%\n", total-commute, ((total-commute)/total)*100)
 	}
+	DEBUG.Printf("All data: len=%d cap=%d %v\n", len(multiYears), cap(multiYears), multiYears)
 }
