@@ -94,6 +94,11 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 	return allActivities
 }
 
+func ticFormat(x float64) string {
+	output := fmt.Sprintf("%d", int(x))
+	return output
+}
+
 func graphResults(results []stravaDistances) {
 	// create the file to write to
 	imgFile, err := os.Create("chart.png")
@@ -136,14 +141,18 @@ func graphResults(results []stravaDistances) {
 	// create the chart and add data
 	barc := chart.BarChart{Title: "Strava Commutes and Pleasure Rides"}
 	barc.Key.Hide = true
-	//barc.XRange.Fixed(float64(firstYear-1), float64(lastYear), 1)
-	// TODO need to solve the x-axis labels. They're coming out as 2.0k instead of 2014 for example
+	barc.XRange.Fixed(float64(firstYear-1), float64(lastYear+1), 1)
+	barc.XRange.Label = "Year"
+	barc.XRange.TicSetting.Format = ticFormat
+	barc.YRange.Label = "Distance (km)"
+
 	barc.AddDataPair("Commutes", years, commutes, red)
 	barc.AddDataPair("Pleasure", years, pleasure, green)
 
 	// essentially create the image, and then plot it
 	igr := imgg.AddTo(i, 0, 0, 500, 500, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, nil)
 	barc.Stacked = true
+
 	barc.Plot(igr)
 
 	// encode it all as png format into the file
