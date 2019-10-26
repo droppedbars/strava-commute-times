@@ -2,3 +2,4 @@ tokens.json
 api_client_secrets.json
 *.backup
 *.log
+*.png

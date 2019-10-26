@@ -9,8 +9,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/png"
+	"os"
 	"strconv"
 	"time"
+
+	"github.com/vdobler/chart"
+	"github.com/vdobler/chart/imgg"
 )
 
 const annualCommuteKm = 5875 // assumes 25km/day, 5 days a week, 5 weeks of no riding per year
@@ -84,6 +92,62 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 		TRACE.Println("\n\nOne response: ", arrayJSONResponse[1])
 	}
 	return allActivities
+}
+
+func graphResults(results []stravaDistances) {
+	// create the file to write to
+	imgFile, err := os.Create("chart.png")
+	if err != nil {
+		ERROR.Panic(err)
+	}
+	defer imgFile.Close()
+
+	// draw the base image and set its size
+	i := image.NewRGBA(image.Rect(0, 0, 500, 500))             // RGBA image that is a 500x500 rectangle starting at 0,0
+	bg := image.NewUniform(color.RGBA{0xff, 0xff, 0xff, 0xff}) // white background
+	draw.Draw(i, i.Bounds(), bg, image.ZP, draw.Src)
+
+	// set the chart style
+	red := chart.Style{Symbol: 'o', LineColor: color.NRGBA{0xcc, 0x00, 0x00, 0xff},
+		FillColor: color.NRGBA{0xff, 0x80, 0x80, 0xff},
+		LineStyle: chart.SolidLine, LineWidth: 2}
+	green := chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00, 0xcc, 0x00, 0xff},
+		FillColor: color.NRGBA{0x80, 0xff, 0x80, 0xff},
+		LineStyle: chart.SolidLine, LineWidth: 2}
+
+	var years []float64
+	var commutes []float64
+	var pleasure []float64
+	firstYear := time.Now().Year()
+	lastYear := epoch
+
+	for _, v := range results {
+		years = append(years, float64(v.year))
+		commutes = append(commutes, v.commute)
+		pleasure = append(pleasure, v.pleasure)
+		if firstYear > v.year {
+			firstYear = v.year
+		}
+		if lastYear < v.year {
+			lastYear = v.year
+		}
+	}
+
+	// create the chart and add data
+	barc := chart.BarChart{Title: "Strava Commutes and Pleasure Rides"}
+	barc.Key.Hide = true
+	//barc.XRange.Fixed(float64(firstYear-1), float64(lastYear), 1)
+	// TODO need to solve the x-axis labels. They're coming out as 2.0k instead of 2014 for example
+	barc.AddDataPair("Commutes", years, commutes, red)
+	barc.AddDataPair("Pleasure", years, pleasure, green)
+
+	// essentially create the image, and then plot it
+	igr := imgg.AddTo(i, 0, 0, 500, 500, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, nil)
+	barc.Stacked = true
+	barc.Plot(igr)
+
+	// encode it all as png format into the file
+	png.Encode(imgFile, i)
 }
 
 // main execution function.
@@ -170,4 +234,5 @@ func main() {
 		fmt.Printf("Total Pleasure (km): %.1f, %.1f%%\n", total-commute, ((total-commute)/total)*100)
 	}
 	DEBUG.Printf("All data: len=%d cap=%d %v\n", len(multiYears), cap(multiYears), multiYears)
+	graphResults(multiYears)
 }
