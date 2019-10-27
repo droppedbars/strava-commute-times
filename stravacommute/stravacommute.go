@@ -101,7 +101,8 @@ func ticFormat(x float64) string {
 
 func graphResults(results []stravaDistances) {
 	// create the file to write to
-	imgFile, err := os.Create("chart.png")
+	fileName := fmt.Sprintf("%d-%d-%d", time.Now().Year(), time.Now().Month(), time.Now().Day())
+	imgFile, err := os.Create("commute-" + fileName + ".png")
 	if err != nil {
 		ERROR.Panic(err)
 	}
@@ -157,7 +158,10 @@ func graphResults(results []stravaDistances) {
 	barc.Plot(igr)
 
 	// encode it all as png format into the file
-	png.Encode(imgFile, i)
+	err = png.Encode(imgFile, i)
+	if err != nil {
+		ERROR.Panicln(err)
+	}
 }
 
 // main execution function.
