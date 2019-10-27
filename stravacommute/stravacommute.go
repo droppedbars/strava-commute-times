@@ -141,7 +141,8 @@ func graphResults(results []stravaDistances) {
 
 	// create the chart and add data
 	barc := chart.BarChart{Title: "Strava Commutes and Pleasure Rides"}
-	barc.Key.Hide = true
+	barc.Key.Hide = false
+	barc.Key.Pos = "itl" // means to left
 	barc.XRange.Fixed(float64(firstYear-1), float64(lastYear+1), 1)
 	barc.XRange.Label = "Year"
 	barc.XRange.TicSetting.Format = ticFormat
