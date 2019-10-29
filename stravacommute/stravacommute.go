@@ -73,54 +73,15 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 	return allActivities
 }
 
-// main execution function.
-func main() {
-	setLogging(true, debugLevel)
-
-	flag.Parse()
-	var year1 int
-	var year2 int
-
-	year1 = *flagYear1
-	year2 = *flagYear2
-	if year1 > year2 {
-		year2 = *flagYear1
-		year1 = *flagYear2
-	}
-	currentYear := time.Now().Year()
-	if year2 > currentYear {
-		year2 = currentYear
-	}
-	if year1 < epoch {
-		year1 = epoch
-	}
-
-	var auth tokens
-
-	sec, err := loadSecrets()
-	if err != nil {
-		ERROR.Fatalln(err)
-	}
-	refreshToken, accessToken, err := loadTokens(sec)
-	auth.RefreshToken = refreshToken
-	auth.AccessToken = accessToken
-
-	if err != nil {
-		ERROR.Fatalln(err)
-	}
-
-	auth, err = stravaOAuthCall(sec, "refresh_token", auth)
-	err = storeTokens(auth)
-	if err != nil {
-		ERROR.Fatalln(err)
-	}
-
+func outputStravaDistances(year1, year2 int, auth tokens) []stravaDistances {
 	var multiYears []stravaDistances
+
 	for i := year1; i <= year2; i++ {
 		year := strconv.Itoa(i)
 
 		var startTime time.Time
 		var endTime time.Time
+		var err error
 		startTime, err = time.Parse(time.RFC3339, year+"-01-01T12:00:01-08:00")
 		endTime, err = time.Parse(time.RFC3339, year+"-12-31T11:59:59-08:00")
 
@@ -155,5 +116,57 @@ func main() {
 		fmt.Printf("Total Pleasure (km): %.1f, %.1f%%\n", total-commute, ((total-commute)/total)*100)
 	}
 	DEBUG.Printf("All data: len=%d cap=%d %v\n", len(multiYears), cap(multiYears), multiYears)
+	return multiYears
+}
+
+func getYears() (int, int) {
+	var year1 int
+	var year2 int
+
+	year1 = *flagYear1
+	year2 = *flagYear2
+	if year1 > year2 {
+		year2 = *flagYear1
+		year1 = *flagYear2
+	}
+	currentYear := time.Now().Year()
+	if year2 > currentYear {
+		year2 = currentYear
+	}
+	if year1 < epoch {
+		year1 = epoch
+	}
+
+	return year1, year2
+}
+
+// main execution function.
+func main() {
+	setLogging(true, debugLevel)
+
+	flag.Parse()
+	year1, year2 := getYears()
+
+	var auth tokens
+
+	sec, err := loadSecrets()
+	if err != nil {
+		ERROR.Fatalln(err)
+	}
+	refreshToken, accessToken, err := loadTokens(sec)
+	auth.RefreshToken = refreshToken
+	auth.AccessToken = accessToken
+
+	if err != nil {
+		ERROR.Fatalln(err)
+	}
+
+	auth, err = stravaOAuthCall(sec, "refresh_token", auth)
+	err = storeTokens(auth)
+	if err != nil {
+		ERROR.Fatalln(err)
+	}
+
+	multiYears := outputStravaDistances(year1, year2, auth)
 	graphResults(multiYears)
 }
