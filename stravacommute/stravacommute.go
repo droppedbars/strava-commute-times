@@ -9,16 +9,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"image"
-	"image/color"
-	"image/draw"
-	"image/png"
-	"os"
 	"strconv"
 	"time"
-
-	"github.com/vdobler/chart"
-	"github.com/vdobler/chart/imgg"
 )
 
 const annualCommuteKm = 5875 // assumes 25km/day, 5 days a week, 5 weeks of no riding per year
@@ -32,19 +24,6 @@ type stravaDistances struct {
 	year     int
 	commute  float64
 	pleasure float64
-}
-
-// outputActivityStartStop will take the id of a Strava activity and print out the times
-// the activity started and stopped. It uses the accessToken to make a API call to Strava.
-func outputActivityStartStop(id uint64, accessToken string) {
-	JSONResponse, err := stravaAPIGetJSON(stravaGetActivityPath+strconv.FormatUint(id, 10), nil, accessToken)
-	if err != nil {
-		ERROR.Fatal(err)
-	}
-
-	name := JSONResponse["name"].(string)
-
-	fmt.Println("activity name: ", name)
 }
 
 // activityDistanceTotals takes an array of Strava activities (in the format returned by Strava)
@@ -94,78 +73,6 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 	return allActivities
 }
 
-func ticFormat(x float64) string {
-	output := fmt.Sprintf("%d", int(x))
-	return output
-}
-
-func graphResults(results []stravaDistances) {
-	// create the file to write to
-	fileName := fmt.Sprintf("%d-%d-%d", time.Now().Year(), time.Now().Month(), time.Now().Day())
-	imgFile, err := os.Create("commute-" + fileName + ".png")
-	if err != nil {
-		ERROR.Panic(err)
-	}
-	defer imgFile.Close()
-
-	// draw the base image and set its size
-	i := image.NewRGBA(image.Rect(0, 0, 500, 500))             // RGBA image that is a 500x500 rectangle starting at 0,0
-	bg := image.NewUniform(color.RGBA{0xff, 0xff, 0xff, 0xff}) // white background
-	draw.Draw(i, i.Bounds(), bg, image.ZP, draw.Src)
-
-	// set the chart style
-	red := chart.Style{Symbol: 'o', LineColor: color.NRGBA{0xcc, 0x00, 0x00, 0xff},
-		FillColor: color.NRGBA{0xff, 0x80, 0x80, 0xff},
-		LineStyle: chart.SolidLine, LineWidth: 2}
-	green := chart.Style{Symbol: '#', LineColor: color.NRGBA{0x00, 0xcc, 0x00, 0xff},
-		FillColor: color.NRGBA{0x80, 0xff, 0x80, 0xff},
-		LineStyle: chart.SolidLine, LineWidth: 2}
-
-	var years []float64
-	var commutes []float64
-	var pleasure []float64
-	firstYear := time.Now().Year()
-	lastYear := epoch
-
-	for _, v := range results {
-		years = append(years, float64(v.year))
-		commutes = append(commutes, v.commute)
-		pleasure = append(pleasure, v.pleasure)
-		if firstYear > v.year {
-			firstYear = v.year
-		}
-		if lastYear < v.year {
-			lastYear = v.year
-		}
-	}
-
-	// create the chart and add data
-	barc := chart.BarChart{Title: "Strava Commutes and Pleasure Rides"}
-	barc.Key.Hide = false
-	barc.Key.Pos = "itl" // means to left
-	barc.XRange.Fixed(float64(firstYear-1), float64(lastYear+1), 1)
-	barc.XRange.Label = "Year"
-	barc.XRange.TicSetting.Format = ticFormat
-	barc.YRange.Label = "Distance (km)"
-	barc.YRange.TicSetting.Format = ticFormat
-	barc.ShowVal = 3 // show the value at top of the bar (above bar doesn't work for stacked graphs)
-
-	barc.AddDataPair("Commutes", years, commutes, red)
-	barc.AddDataPair("Pleasure", years, pleasure, green)
-
-	// essentially create the image, and then plot it
-	igr := imgg.AddTo(i, 0, 0, 500, 500, color.RGBA{0xff, 0xff, 0xff, 0xff}, nil, nil)
-	barc.Stacked = true
-
-	barc.Plot(igr)
-
-	// encode it all as png format into the file
-	err = png.Encode(imgFile, i)
-	if err != nil {
-		ERROR.Panicln(err)
-	}
-}
-
 // main execution function.
 func main() {
 	setLogging(true, debugLevel)
@@ -207,8 +114,6 @@ func main() {
 	if err != nil {
 		ERROR.Fatalln(err)
 	}
-
-	//outputActivityStartStop(2685947039, auth.AccessToken)
 
 	var multiYears []stravaDistances
 	for i := year1; i <= year2; i++ {
