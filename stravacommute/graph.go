@@ -7,6 +7,7 @@ import (
 	"image/draw"
 	"image/png"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/vdobler/chart"
@@ -18,7 +19,7 @@ func ticFormat(x float64) string {
 	return output
 }
 
-func graphResults(results []stravaDistances) {
+func graphResults(results map[int]stravaDistances) {
 	// create the file to write to
 	fileName := fmt.Sprintf("%d-%d-%d", time.Now().Year(), time.Now().Month(), time.Now().Day())
 	imgFile, err := os.Create("commute-" + fileName + ".png")
@@ -46,15 +47,20 @@ func graphResults(results []stravaDistances) {
 	firstYear := time.Now().Year()
 	lastYear := epoch
 
-	for _, v := range results {
-		years = append(years, float64(v.year))
-		commutes = append(commutes, v.commute)
-		pleasure = append(pleasure, v.pleasure)
-		if firstYear > v.year {
-			firstYear = v.year
+	var keys []int
+	for key := range multiYears {
+		keys = append(keys, key)
+	}
+	sort.Ints(keys)
+	for _, v := range keys {
+		years = append(years, float64(results[v].year))
+		commutes = append(commutes, results[v].commute)
+		pleasure = append(pleasure, results[v].pleasure)
+		if firstYear > results[v].year {
+			firstYear = results[v].year
 		}
-		if lastYear < v.year {
-			lastYear = v.year
+		if lastYear < results[v].year {
+			lastYear = results[v].year
 		}
 	}
 

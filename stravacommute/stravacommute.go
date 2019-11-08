@@ -9,7 +9,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"sort"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -19,6 +21,10 @@ const epoch = 2009           // when strava started, so there should never be da
 
 var flagYear1 = flag.Int("startYear", time.Now().Year(), "First year to run the commute numbers for. Defaults to current year.")
 var flagYear2 = flag.Int("endYear", time.Now().Year(), "Last year to run the commute numbers for. Defaults to current year.")
+
+var multiYears = make(map[int]stravaDistances)
+var mu sync.Mutex
+var wg sync.WaitGroup
 
 type stravaDistances struct {
 	year     int
@@ -73,11 +79,45 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 	return allActivities
 }
 
-func outputStravaDistances(year1, year2 int, auth tokens) []stravaDistances {
-	var multiYears []stravaDistances
+func returnYearResults(yearInt int, auth tokens) {
+	defer wg.Done()
+	year := strconv.Itoa(yearInt)
+	var startTime time.Time
+	var endTime time.Time
+	var err error
 
+	startTime, err = time.Parse(time.RFC3339, year+"-01-01T12:00:01-08:00")
+	endTime, err = time.Parse(time.RFC3339, year+"-12-31T11:59:59-08:00")
+	if err != nil {
+		ERROR.Fatalln(err)
+	}
+
+	allActivities := getRidingActivities(uint64(startTime.Unix()), uint64(endTime.Unix()), auth.AccessToken)
+	total, commute := ridingDistanceTotals(allActivities)
+	distances := stravaDistances{year: yearInt, commute: commute, pleasure: total - commute}
+	mu.Lock()
+	multiYears[yearInt] = distances
+	mu.Unlock()
+}
+
+func getStravaDistances(year1, year2 int, auth tokens) {
 	for i := year1; i <= year2; i++ {
-		year := strconv.Itoa(i)
+		wg.Add(1)
+		go returnYearResults(i, auth)
+	}
+}
+
+func outputStravaDistances(multiYears map[int]stravaDistances) {
+	var years []int
+	for year := range multiYears {
+		years = append(years, year)
+	}
+	sort.Ints(years)
+	for _, yearInt := range years {
+		commute := multiYears[yearInt].commute
+		total := multiYears[yearInt].commute + multiYears[yearInt].pleasure
+
+		year := strconv.Itoa(yearInt)
 
 		var startTime time.Time
 		var endTime time.Time
@@ -91,11 +131,6 @@ func outputStravaDistances(year1, year2 int, auth tokens) []stravaDistances {
 
 		INFO.Println("Commute time range start: ", startTime)
 		INFO.Println("Commute time range end: ", endTime)
-
-		allActivities := getRidingActivities(uint64(startTime.Unix()), uint64(endTime.Unix()), auth.AccessToken)
-		total, commute := ridingDistanceTotals(allActivities)
-		distances := stravaDistances{year: i, commute: commute, pleasure: total - commute}
-		multiYears = append(multiYears, distances)
 
 		percentageOfYear := 1.0
 		fullYear := true
@@ -115,8 +150,6 @@ func outputStravaDistances(year1, year2 int, auth tokens) []stravaDistances {
 		}
 		fmt.Printf("Total Pleasure (km): %.1f, %.1f%%\n", total-commute, ((total-commute)/total)*100)
 	}
-	DEBUG.Printf("All data: len=%d cap=%d %v\n", len(multiYears), cap(multiYears), multiYears)
-	return multiYears
 }
 
 func getYears() (int, int) {
@@ -167,6 +200,15 @@ func main() {
 		ERROR.Fatalln(err)
 	}
 
-	multiYears := outputStravaDistances(year1, year2, auth)
+	getStravaDistances(year1, year2, auth)
+	wg.Wait()
+	outputStravaDistances(multiYears)
+	//DEBUG.Printf("All data: len=%d cap=%d %v\n", len(multiYears), cap(multiYears), multiYears)
 	graphResults(multiYears)
 }
+
+// TODO fix the above DEBUG to work
+// TODO some code duplication around startTime, endTime
+// TODO clean up the global multiYears variable somehow
+// TODO clean up the new gode in graph.go for multiYears sort
+// TODO comment things
