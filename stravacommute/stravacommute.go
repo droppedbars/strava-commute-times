@@ -75,18 +75,26 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 	return allActivities
 }
 
-func returnYearResults(yearInt int, auth tokens, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
-	defer wg.Done()
-	year := strconv.Itoa(yearInt)
+func getYearRange(year int) (time.Time, time.Time) {
+	yearStr := strconv.Itoa(year)
 	var startTime time.Time
 	var endTime time.Time
 	var err error
 
-	startTime, err = time.Parse(time.RFC3339, year+"-01-01T12:00:01-08:00")
-	endTime, err = time.Parse(time.RFC3339, year+"-12-31T11:59:59-08:00")
+	startTime, err = time.Parse(time.RFC3339, yearStr+"-01-01T12:00:01-08:00")
 	if err != nil {
 		ERROR.Fatalln(err)
 	}
+	endTime, err = time.Parse(time.RFC3339, yearStr+"-12-31T11:59:59-08:00")
+	if err != nil {
+		ERROR.Fatalln(err)
+	}
+	return startTime, endTime
+}
+
+func returnYearResults(yearInt int, auth tokens, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
+	defer wg.Done()
+	startTime, endTime := getYearRange(yearInt)
 
 	allActivities := getRidingActivities(uint64(startTime.Unix()), uint64(endTime.Unix()), auth.AccessToken)
 	total, commute := ridingDistanceTotals(allActivities)
@@ -113,17 +121,7 @@ func outputStravaDistances(multiYears map[int]stravaDistances) {
 		commute := multiYears[yearInt].commute
 		total := multiYears[yearInt].commute + multiYears[yearInt].pleasure
 
-		year := strconv.Itoa(yearInt)
-
-		var startTime time.Time
-		var endTime time.Time
-		var err error
-		startTime, err = time.Parse(time.RFC3339, year+"-01-01T12:00:01-08:00")
-		endTime, err = time.Parse(time.RFC3339, year+"-12-31T11:59:59-08:00")
-
-		if err != nil {
-			ERROR.Fatalln(err)
-		}
+		startTime, endTime := getYearRange(yearInt)
 
 		INFO.Println("Commute time range start: ", startTime)
 		INFO.Println("Commute time range end: ", endTime)
@@ -134,7 +132,7 @@ func outputStravaDistances(multiYears map[int]stravaDistances) {
 			percentageOfYear = time.Since(startTime).Hours() / hoursInYear
 			fullYear = false
 		}
-		fmt.Println("\n" + year)
+		fmt.Println("\n" + strconv.Itoa(yearInt))
 		fmt.Printf("Total Distance (km): %.1f\n", total)
 		if !fullYear {
 			fmt.Printf("  Estimated end of year distance (km): %.1f\n", total/percentageOfYear)
@@ -207,7 +205,5 @@ func main() {
 	graphResults(multiYears)
 }
 
-// TODO some code duplication around startTime, endTime
-// TODO clean up the global multiYears variable somehow
 // TODO clean up the new code in graph.go for multiYears sort
 // TODO comment things
