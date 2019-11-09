@@ -48,7 +48,7 @@ func graphResults(results map[int]stravaDistances) {
 	lastYear := epoch
 
 	var keys []int
-	for key := range multiYears {
+	for key := range results {
 		keys = append(keys, key)
 	}
 	sort.Ints(keys)

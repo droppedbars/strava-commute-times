@@ -22,10 +22,6 @@ const epoch = 2009           // when strava started, so there should never be da
 var flagYear1 = flag.Int("startYear", time.Now().Year(), "First year to run the commute numbers for. Defaults to current year.")
 var flagYear2 = flag.Int("endYear", time.Now().Year(), "Last year to run the commute numbers for. Defaults to current year.")
 
-var multiYears = make(map[int]stravaDistances)
-var mu sync.Mutex
-var wg sync.WaitGroup
-
 type stravaDistances struct {
 	year     int
 	commute  float64
@@ -79,7 +75,7 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 	return allActivities
 }
 
-func returnYearResults(yearInt int, auth tokens) {
+func returnYearResults(yearInt int, auth tokens, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
 	defer wg.Done()
 	year := strconv.Itoa(yearInt)
 	var startTime time.Time
@@ -100,10 +96,10 @@ func returnYearResults(yearInt int, auth tokens) {
 	mu.Unlock()
 }
 
-func getStravaDistances(year1, year2 int, auth tokens) {
+func getStravaDistances(year1, year2 int, auth tokens, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
 	for i := year1; i <= year2; i++ {
 		wg.Add(1)
-		go returnYearResults(i, auth)
+		go returnYearResults(i, auth, multiYears, mu, wg)
 	}
 }
 
@@ -200,15 +196,18 @@ func main() {
 		ERROR.Fatalln(err)
 	}
 
-	getStravaDistances(year1, year2, auth)
+	var multiYears = make(map[int]stravaDistances)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	getStravaDistances(year1, year2, auth, multiYears, &mu, &wg)
 	wg.Wait()
 	outputStravaDistances(multiYears)
-	//DEBUG.Printf("All data: len=%d cap=%d %v\n", len(multiYears), cap(multiYears), multiYears)
+	DEBUG.Printf("All data: len=%d %v\n", len(multiYears), multiYears)
 	graphResults(multiYears)
 }
 
-// TODO fix the above DEBUG to work
 // TODO some code duplication around startTime, endTime
 // TODO clean up the global multiYears variable somehow
-// TODO clean up the new gode in graph.go for multiYears sort
+// TODO clean up the new code in graph.go for multiYears sort
 // TODO comment things
