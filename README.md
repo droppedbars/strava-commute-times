@@ -1,19 +1,17 @@
 # strava-commute-times
 Test project to try Strava APIs, and some different things in Go
 
-This project is very much in progress and highly iterative. The initial goal is simply to learn to interact with some of the Strava APIs, with the outcome being calculations of time spent riding commutes vs pleasure rides. 
-
 ## What it does
 This application will go through your bike rides in Strava for the current year, or a range of years, and produce some basic stats: your total commute distance, pleasure distance, and total distance for the year. It will also produce the percentages and if it is looking at the current year, provide a forecast of anticipated total distance.
 It also provides for how much of your commute distance each year is done by bicycle (currently hardcoded to a assumption of 5875 km per year)
 
 ## How to set up
 1. Log into Strava and go to https://www.strava.com/settings/api to set up your own API Application
-2. Get the Client ID and Secret
-3. Copy api_client_secrets.json.template.json to api_client_secrets.json
-4. Enter the Client ID and Secrete from step 2 into api_client_secrets.json
-5. Run the application and follow the instructions: enter the provided URL into your web browser (you may need to log into strava) and click Authorize, copy and paste the resulting URL into the input in the application
-6. The application will output your Strava ride information for the current year and generate a bar chart for the current year
+1. Get the Client ID and Secret
+1. Copy api_client_secrets.json.template.json to api_client_secrets.json
+1. Enter the Client ID and Secrete from step 2 into api_client_secrets.json
+1. Run the application and follow the instructions: enter the provided URL into your web browser (you may need to log into strava) and click Authorize, copy and paste the resulting URL into the input in the application
+1. The application will output your Strava ride information for the current year and generate a bar chart for the current year
 
 ## Notes for the Application
 * The application keeps your Client ID and Secrete in an unencrypted json file. So be aware of that.
