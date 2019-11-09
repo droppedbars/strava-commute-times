@@ -205,5 +205,4 @@ func main() {
 	graphResults(multiYears)
 }
 
-// TODO clean up the new code in graph.go for multiYears sort
 // TODO comment things

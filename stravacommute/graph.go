@@ -52,15 +52,16 @@ func graphResults(results map[int]stravaDistances) {
 		keys = append(keys, key)
 	}
 	sort.Ints(keys)
-	for _, v := range keys {
-		years = append(years, float64(results[v].year))
-		commutes = append(commutes, results[v].commute)
-		pleasure = append(pleasure, results[v].pleasure)
-		if firstYear > results[v].year {
-			firstYear = results[v].year
+
+	for _, resultYear := range keys {
+		years = append(years, float64(results[resultYear].year))
+		commutes = append(commutes, results[resultYear].commute)
+		pleasure = append(pleasure, results[resultYear].pleasure)
+		if firstYear > results[resultYear].year {
+			firstYear = results[resultYear].year
 		}
-		if lastYear < results[v].year {
-			lastYear = results[v].year
+		if lastYear < results[resultYear].year {
+			lastYear = results[resultYear].year
 		}
 	}
 
