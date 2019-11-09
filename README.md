@@ -8,8 +8,8 @@ It also provides for how much of your commute distance each year is done by bicy
 ## How to set up
 1. Log into Strava and go to https://www.strava.com/settings/api to set up your own API Application
 1. Get the Client ID and Secret
-1. Copy api_client_secrets.json.template.json to api_client_secrets.json
-1. Enter the Client ID and Secrete from step 2 into api_client_secrets.json
+1. Copy *api_client_secrets.json.template* to *api_client_secrets.json*
+1. Enter the Client ID and Secrete from step 2 into *api_client_secrets.json*
 1. Run the application and follow the instructions: enter the provided URL into your web browser (you may need to log into strava) and click Authorize, copy and paste the resulting URL into the input in the application
 1. The application will output your Strava ride information for the current year and generate a bar chart for the current year
 
@@ -23,4 +23,4 @@ It also provides for how much of your commute distance each year is done by bicy
 * The application will error if you try to provide a year before 2009 (the year of Strava's release).
 
 ## Why?
-This application was written as an exercise to use Go. It is not the best way to interact with Strava (a web app that handles the authorization by the user would be more appropriate). It exercised a few skills, basic Go, multiple files in a package, Godoc, various data structures, objects, using third-party libraries (for creating the graphs), and basic Goroutines.
+This application was written as an exercise to use Go. It is not the best way to interact with Strava (a web app that handles the authorization by the user would be more appropriate). It exercised a few skills, basic Go, multiple files in a package, Godoc, various data structures, objects, logging, commandline flags, using third-party libraries (for creating the graphs), and basic Goroutines.
