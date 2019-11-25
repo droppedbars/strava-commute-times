@@ -2,6 +2,8 @@
 // Import the package, then run logger.SetLogger, providing the if the logs should be output to a log file,
 // and the log level. The public constants can be used to set the log level. 0 is no logs, and 5 or higher
 // is trace level logging.
+// If SetLogger is not called, then the default behaviour is to dump all logs to ioutil.Discard on all
+// the log levels.
 // To log at a particular level, use logger.DEBUG.Printf("message") for example.
 // Log levels available are ERROR, WARN, INFO, DEBUG, and TRACE.
 // The package does not provide any log rotation and will overwrite the specified log file.
@@ -87,4 +89,13 @@ func SetLogging(logToFile bool, level int) {
 	INFO = log.New(infoOut, "INFO  ", log.Ldate|log.Ltime)
 	WARN = log.New(warnOut, "WARN  ", log.Ldate|log.Ltime)
 	ERROR = log.New(errorOut, "ERROR ", log.Ldate|log.Ltime)
+}
+
+func init() {
+	dump := ioutil.Discard
+	TRACE = log.New(dump, "TRACE ", log.Ldate|log.Ltime)
+	DEBUG = log.New(dump, "DEBUG ", log.Ldate|log.Ltime)
+	INFO = log.New(dump, "INFO  ", log.Ldate|log.Ltime)
+	WARN = log.New(dump, "WARN  ", log.Ldate|log.Ltime)
+	ERROR = log.New(dump, "ERROR ", log.Ldate|log.Ltime)
 }

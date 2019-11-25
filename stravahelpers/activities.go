@@ -65,7 +65,7 @@ func StravaAPIGetResponse(url string, params map[string]uint64, accessToken stri
 	return body, nil
 }
 
-// StravaAPIGetArray returns the Strava API response which is expected to be a json result.
+// StravaAPIGetJSON returns the Strava API response which is expected to be a json result.
 //  url is the API url, params is the key/value map of paramters, accessToken is the Strava access token.
 // TODO: params should handle parameters that are not uint64
 func StravaAPIGetJSON(url string, params map[string]uint64, accessToken string) (map[string]interface{}, error) {
