@@ -1,3 +1,8 @@
+// Package stravahelpers is a package of helper functions for interacting with the Strava APIs.
+// It makes use of github.com/droppedbars/strava-commute-times/logger for logging. The main
+// application should set up logger before making use of stravahelpers. The logging is useful to
+// show what messaging is going back and forth, and it makes use of INFO, DEBUG and TRACE log levels.
+// Errors are returned as errors to the main application.
 package stravahelpers
 
 import (
@@ -12,7 +17,11 @@ import (
 )
 
 const stravaBasePath = "https://www.strava.com/api/v3/"
-const stravaGetActivityPath = stravaBasePath + "activities/"
+
+// StravaGetActivityPath is the URL for strava's GET activities
+const StravaGetActivityPath = stravaBasePath + "activities/"
+
+// StravaListActivitiesPath is the URL to GET the list of all of an athletes activities
 const StravaListActivitiesPath = stravaBasePath + "athlete/activities/"
 
 // StravaAPIGetResponse makes a call to a Strava GET API.
