@@ -9,7 +9,7 @@ It also provides for how much of your commute distance each year is done by bicy
 1. Log into Strava and go to https://www.strava.com/settings/api to set up your own API Application
 1. Get the Client ID and Secret
 1. Copy *api_client_secrets.json.template* to *api_client_secrets.json*
-1. Enter the Client ID and Secrete from step 2 into *api_client_secrets.json*
+1. Enter the Client ID and Secret from step 2 into *api_client_secrets.json*
 1. Run the application and follow the instructions: enter the provided URL into your web browser (you may need to log into strava) and click Authorize, copy and paste the resulting URL into the input in the application
 1. The application will output your Strava ride information for the current year and generate a bar chart for the current year
 
