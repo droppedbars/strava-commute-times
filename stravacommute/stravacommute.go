@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/droppedbars/strava-commute-times/logger"
+	"github.com/droppedbars/strava-commute-times/stravahelpers"
 )
 
 const annualCommuteKm = 5875 // assumes 25km/day, 5 days a week, 5 weeks of no riding per year
@@ -62,7 +63,7 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 			"page":     uint64(i),
 			"per_page": 200,
 		}
-		arrayJSONResponse, err := stravaAPIGetArray(stravaListActivitiesPath, activitiyListParams, accessToken)
+		arrayJSONResponse, err := stravahelpers.StravaAPIGetArray(stravahelpers.StravaListActivitiesPath, activitiyListParams, accessToken)
 		if err != nil {
 			logger.ERROR.Fatal(err)
 		}
