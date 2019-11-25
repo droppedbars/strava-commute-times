@@ -1,4 +1,4 @@
-package main
+package stravahelpers
 
 import (
 	"encoding/json"
@@ -16,26 +16,26 @@ const tokenJSONFileName = "./tokens.json"
 const secretsJSONFileName = "./api_client_secrets.json"
 const stravaOAuthPath = "https://www.strava.com/oauth/token"
 
-// struct that contains the secrets for the API application
-type secrets struct {
+// Secrets struct that contains the secrets for the API application
+type Secrets struct {
 	ClientID     int
 	ClientSecret string
 }
 
-// struct that defines the necessary authorization tokens for Strava
-type tokens struct {
+// Tokens struct that defines the necessary authorization tokens for Strava
+type Tokens struct {
 	AuthCode     string
 	RefreshToken string
 	AccessToken  string
 }
 
-// loadTokens loads the authentication tokens by trying the tokens.json first. If that fails, then it will
+// LoadTokens loads the authentication tokens by trying the tokens.json first. If that fails, then it will
 // provide the user with a URL to enter in the web browser, and ask for the resulting URL back,
 // then parses out the authorization code and makes an OAuth call to get a valid refresh and
 // access token.
 // Returns refreshToken, accessToken, error
-func loadTokens(sec secrets) (string, string, error) {
-	var obj tokens
+func LoadTokens(sec Secrets) (string, string, error) {
+	var obj Tokens
 	var refreshToken string
 	var accessToken string
 
@@ -84,7 +84,7 @@ func loadTokens(sec secrets) (string, string, error) {
 		logger.DEBUG.Println("Auth code is: ", obj.AuthCode)
 
 		// make a call to OAuth to authenticate and get the refresh token
-		obj, err = stravaOAuthCall(sec, "authorization_code", obj)
+		obj, err = StravaOAuthCall(sec, "authorization_code", obj)
 	}
 
 	refreshToken = obj.RefreshToken
@@ -95,10 +95,10 @@ func loadTokens(sec secrets) (string, string, error) {
 	return refreshToken, accessToken, nil
 }
 
-// loadSecrets loads the Strava client id, secret and refresh token from the json file
+// LoadSecrets loads the Strava client id, secret and refresh token from the json file
 // and return them in a tokens struct.
-func loadSecrets() (secrets, error) {
-	var obj secrets
+func LoadSecrets() (Secrets, error) {
+	var obj Secrets
 
 	fileInfo, err := os.Stat(secretsJSONFileName)
 	if err != nil || fileInfo.IsDir() {
@@ -126,8 +126,8 @@ func loadSecrets() (secrets, error) {
 	return obj, nil
 }
 
-// storeTokens receives a token struct and stores them in a json file.
-func storeTokens(auth tokens) error {
+// StoreTokens receives a token struct and stores them in a json file.
+func StoreTokens(auth Tokens) error {
 	data, err := json.Marshal(auth)
 	if err != nil {
 		return err
@@ -143,10 +143,10 @@ func storeTokens(auth tokens) error {
 	return nil
 }
 
-// stravaOAuthCall calls the Strava's OAuth APIs. Grant type can be either "refresh_token"
+// StravaOAuthCall calls the Strava's OAuth APIs. Grant type can be either "refresh_token"
 // or it can be "authorization_code". The values will be set appropriately when
 // making the call to Strava
-func stravaOAuthCall(sec secrets, grantType string, auth tokens) (tokens, error) {
+func StravaOAuthCall(sec Secrets, grantType string, auth Tokens) (Tokens, error) {
 	var formData map[string][]string
 	if grantType == "refresh_token" {
 		formData = url.Values{

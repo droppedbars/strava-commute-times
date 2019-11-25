@@ -95,7 +95,7 @@ func getYearRange(year int) (time.Time, time.Time) {
 	return startTime, endTime
 }
 
-func returnYearResults(yearInt int, auth tokens, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
+func returnYearResults(yearInt int, auth stravahelpers.Tokens, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
 	defer wg.Done()
 	startTime, endTime := getYearRange(yearInt)
 
@@ -107,7 +107,7 @@ func returnYearResults(yearInt int, auth tokens, multiYears map[int]stravaDistan
 	mu.Unlock()
 }
 
-func getStravaDistances(year1, year2 int, auth tokens, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
+func getStravaDistances(year1, year2 int, auth stravahelpers.Tokens, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
 	for i := year1; i <= year2; i++ {
 		wg.Add(1)
 		go returnYearResults(i, auth, multiYears, mu, wg)
@@ -177,13 +177,13 @@ func main() {
 	flag.Parse()
 	year1, year2 := getYears()
 
-	var auth tokens
+	var auth stravahelpers.Tokens
 
-	sec, err := loadSecrets()
+	sec, err := stravahelpers.LoadSecrets()
 	if err != nil {
 		logger.ERROR.Fatalln(err)
 	}
-	refreshToken, accessToken, err := loadTokens(sec)
+	refreshToken, accessToken, err := stravahelpers.LoadTokens(sec)
 	auth.RefreshToken = refreshToken
 	auth.AccessToken = accessToken
 
@@ -191,8 +191,8 @@ func main() {
 		logger.ERROR.Fatalln(err)
 	}
 
-	auth, err = stravaOAuthCall(sec, "refresh_token", auth)
-	err = storeTokens(auth)
+	auth, err = stravahelpers.StravaOAuthCall(sec, "refresh_token", auth)
+	err = stravahelpers.StoreTokens(auth)
 	if err != nil {
 		logger.ERROR.Fatalln(err)
 	}
