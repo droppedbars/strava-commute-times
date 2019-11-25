@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/droppedbars/strava-commute-times/logger"
 )
 
 const annualCommuteKm = 5875 // assumes 25km/day, 5 days a week, 5 weeks of no riding per year
@@ -36,7 +38,7 @@ func ridingDistanceTotals(allActivities []map[string]interface{}) (float64, floa
 	total := 0.0
 
 	for j := 0; j < len(allActivities); j++ {
-		TRACE.Println("Activity Name: ", allActivities[j]["name"].(string))
+		logger.TRACE.Println("Activity Name: ", allActivities[j]["name"].(string))
 		if allActivities[j]["type"] == "Ride" || allActivities[j]["type"] == "EBikeRide" {
 			distance := allActivities[j]["distance"].(float64) / 1000 // convert m to km
 			total += distance
@@ -62,15 +64,15 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 		}
 		arrayJSONResponse, err := stravaAPIGetArray(stravaListActivitiesPath, activitiyListParams, accessToken)
 		if err != nil {
-			ERROR.Fatal(err)
+			logger.ERROR.Fatal(err)
 		}
 		if len(arrayJSONResponse) == 0 { // empty response, so no more data
 			break
 		}
 		allActivities = append(allActivities, arrayJSONResponse...)
-		DEBUG.Println("Page: ", i)
-		TRACE.Println("API call response page: "+strconv.Itoa(i)+": ", arrayJSONResponse)
-		TRACE.Println("\n\nOne response: ", arrayJSONResponse[1])
+		logger.DEBUG.Println("Page: ", i)
+		logger.TRACE.Println("API call response page: "+strconv.Itoa(i)+": ", arrayJSONResponse)
+		logger.TRACE.Println("\n\nOne response: ", arrayJSONResponse[1])
 	}
 	return allActivities
 }
@@ -83,11 +85,11 @@ func getYearRange(year int) (time.Time, time.Time) {
 
 	startTime, err = time.Parse(time.RFC3339, yearStr+"-01-01T12:00:01-08:00")
 	if err != nil {
-		ERROR.Fatalln(err)
+		logger.ERROR.Fatalln(err)
 	}
 	endTime, err = time.Parse(time.RFC3339, yearStr+"-12-31T11:59:59-08:00")
 	if err != nil {
-		ERROR.Fatalln(err)
+		logger.ERROR.Fatalln(err)
 	}
 	return startTime, endTime
 }
@@ -123,8 +125,8 @@ func outputStravaDistances(multiYears map[int]stravaDistances) {
 
 		startTime, endTime := getYearRange(yearInt)
 
-		INFO.Println("Commute time range start: ", startTime)
-		INFO.Println("Commute time range end: ", endTime)
+		logger.INFO.Println("Commute time range start: ", startTime)
+		logger.INFO.Println("Commute time range end: ", endTime)
 
 		percentageOfYear := 1.0
 		fullYear := true
@@ -169,7 +171,7 @@ func getYears() (int, int) {
 
 // main execution function.
 func main() {
-	setLogging(true, debugLevel)
+	logger.SetLogging(true, logger.DebugLevel)
 
 	flag.Parse()
 	year1, year2 := getYears()
@@ -178,20 +180,20 @@ func main() {
 
 	sec, err := loadSecrets()
 	if err != nil {
-		ERROR.Fatalln(err)
+		logger.ERROR.Fatalln(err)
 	}
 	refreshToken, accessToken, err := loadTokens(sec)
 	auth.RefreshToken = refreshToken
 	auth.AccessToken = accessToken
 
 	if err != nil {
-		ERROR.Fatalln(err)
+		logger.ERROR.Fatalln(err)
 	}
 
 	auth, err = stravaOAuthCall(sec, "refresh_token", auth)
 	err = storeTokens(auth)
 	if err != nil {
-		ERROR.Fatalln(err)
+		logger.ERROR.Fatalln(err)
 	}
 
 	var multiYears = make(map[int]stravaDistances)
@@ -201,7 +203,7 @@ func main() {
 	getStravaDistances(year1, year2, auth, multiYears, &mu, &wg)
 	wg.Wait()
 	outputStravaDistances(multiYears)
-	DEBUG.Printf("All data: len=%d %v\n", len(multiYears), multiYears)
+	logger.DEBUG.Printf("All data: len=%d %v\n", len(multiYears), multiYears)
 	graphResults(multiYears)
 }
 

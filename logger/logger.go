@@ -1,4 +1,4 @@
-package main
+package logger
 
 import (
 	"io"
@@ -23,20 +23,20 @@ var (
 )
 
 const (
-	noLogLevel = 0
-	errorLevel = 2
-	warnLevel  = 4
-	infoLevel  = 8
-	debugLevel = 16
-	traceLevel = 32
+	NoLogLevel = 0
+	ErrorLevel = 2
+	WarnLevel  = 4
+	InfoLevel  = 8
+	DebugLevel = 16
+	TraceLevel = 32
 )
 
-// setLogging sets up everything needed for logging. It takes in logToFile, which if true will log
+// SetLogging sets up everything needed for logging. It takes in logToFile, which if true will log
 // to ./stravacommute.log, otherwise it will log to StdOut. level sets the log level. It's value
 // can be one of the LogLevel struct values. The log levels are incremental, that is TRACE_LEVEL
 // would include all higher logs, ERROR would include only ERROR.
 // TODO: could have log rotation
-func setLogging(logToFile bool, level int) {
+func SetLogging(logToFile bool, level int) {
 	dump := ioutil.Discard
 	var f io.Writer
 	var err error
@@ -50,19 +50,19 @@ func setLogging(logToFile bool, level int) {
 	}
 	traceOut, debugOut, infoOut, warnOut, errorOut := dump, dump, dump, dump, dump
 
-	if level >= errorLevel {
+	if level >= ErrorLevel {
 		errorOut = f
 	}
-	if level >= warnLevel {
+	if level >= WarnLevel {
 		warnOut = f
 	}
-	if level >= infoLevel {
+	if level >= InfoLevel {
 		infoOut = f
 	}
-	if level >= debugLevel {
+	if level >= DebugLevel {
 		debugOut = f
 	}
-	if level >= traceLevel {
+	if level >= TraceLevel {
 		traceOut = f
 	}
 

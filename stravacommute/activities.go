@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/droppedbars/strava-commute-times/logger"
 )
 
 const stravaBasePath = "https://www.strava.com/api/v3/"
@@ -19,7 +21,7 @@ const stravaListActivitiesPath = stravaBasePath + "athlete/activities/"
 //  accessToken is the Strava access token.
 // TODO: params should handle parameters that are not uint64
 func stravaAPIGetResponse(url string, params map[string]uint64, accessToken string) ([]byte, error) {
-	DEBUG.Println("Base API call URL ", url)
+	logger.DEBUG.Println("Base API call URL ", url)
 
 	client := http.Client{
 		Timeout: time.Duration(5 * time.Second),
@@ -32,7 +34,7 @@ func stravaAPIGetResponse(url string, params map[string]uint64, accessToken stri
 		query.Add(key, strconv.FormatUint(value, 10))
 	}
 	request.URL.RawQuery = query.Encode()
-	INFO.Println("Full API call URL ", request.URL.String())
+	logger.INFO.Println("Full API call URL ", request.URL.String())
 
 	resp, err := client.Do(request)
 	if err != nil {
@@ -50,7 +52,7 @@ func stravaAPIGetResponse(url string, params map[string]uint64, accessToken stri
 		return nil, fmt.Errorf("Error reading body: %s", err)
 	}
 
-	TRACE.Printf("activity body: %s\n", body) // dumps the whole resonse
+	logger.TRACE.Printf("activity body: %s\n", body) // dumps the whole resonse
 	return body, nil
 }
 

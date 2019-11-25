@@ -10,6 +10,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/droppedbars/strava-commute-times/logger"
 	"github.com/vdobler/chart"
 	"github.com/vdobler/chart/imgg"
 )
@@ -24,7 +25,7 @@ func graphResults(results map[int]stravaDistances) {
 	fileName := fmt.Sprintf("%d-%d-%d", time.Now().Year(), time.Now().Month(), time.Now().Day())
 	imgFile, err := os.Create("commute-" + fileName + ".png")
 	if err != nil {
-		ERROR.Panic(err)
+		logger.ERROR.Panic(err)
 	}
 	defer imgFile.Close()
 
@@ -88,6 +89,6 @@ func graphResults(results map[int]stravaDistances) {
 	// encode it all as png format into the file
 	err = png.Encode(imgFile, i)
 	if err != nil {
-		ERROR.Panicln(err)
+		logger.ERROR.Panicln(err)
 	}
 }
