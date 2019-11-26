@@ -61,7 +61,7 @@ func loadTokens(sec secrets) (string, string, error) {
 		}
 	} else { // the auth tokens are missing, so we need to get them from the user
 		fmt.Printf("Enter the following into your web browser: \n")
-		fmt.Printf("   http://www.strava.com/oauth/authorize?client_id=%d&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=activity:read_all\n", sec.ClientID)
+		fmt.Printf("   http://www.strava.com/oauth/authorize?client_id=%d&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=activity:read_all,read_all,profile:read_all\n", sec.ClientID)
 
 		fmt.Printf("\nCopy and paste the URL from the browser: ")
 		// need to get them to enter the response URL

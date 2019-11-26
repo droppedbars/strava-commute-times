@@ -3,7 +3,7 @@
 // application should set up logger before making use of stravahelpers. The logging is useful to
 // show what messaging is going back and forth, and it makes use of INFO, DEBUG and TRACE log levels.
 // Errors are returned as errors to the main application.
-// The first function to call is StravaAuthenticate. This will attempt to authenticate using OAuth 
+// The first function to call is StravaAuthenticate. This will attempt to authenticate using OAuth
 // with Strava and populate the authentication tokens. If it is not run, the tokens will be empty
 // and attempts to interact with Strava APIs will fail.
 package stravahelpers
@@ -26,6 +26,9 @@ const StravaGetActivityPath = stravaBasePath + "activities/"
 
 // StravaListActivitiesPath is the URL to GET the list of all of an athletes activities
 const StravaListActivitiesPath = stravaBasePath + "athlete/activities/"
+
+const StravaListClubMembersPath = stravaBasePath + "clubs/%d/members"
+const StravaListClubActivitiesPath = stravaBasePath + "clubs/%d/activities"
 
 // StravaAPIGetResponse makes a call to a Strava GET API.
 //  url is the URL to the API
