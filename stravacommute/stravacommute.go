@@ -53,7 +53,7 @@ func ridingDistanceTotals(allActivities []map[string]interface{}) (float64, floa
 
 // getActivities returns an array of Strava activities given a date range and accessToken.
 // The dates are provided as time since epoc.
-func getRidingActivities(startDate uint64, endDate uint64, accessToken string) []map[string]interface{} {
+func getRidingActivities(startDate uint64, endDate uint64) []map[string]interface{} {
 	var allActivities []map[string]interface{}
 
 	for i := 1; ; i++ { // strava pages start at 1
@@ -63,7 +63,7 @@ func getRidingActivities(startDate uint64, endDate uint64, accessToken string) [
 			"page":     uint64(i),
 			"per_page": 200,
 		}
-		arrayJSONResponse, err := stravahelpers.StravaAPIGetArray(stravahelpers.StravaListActivitiesPath, activitiyListParams, accessToken)
+		arrayJSONResponse, err := stravahelpers.StravaAPIGetArray(stravahelpers.StravaListActivitiesPath, activitiyListParams)
 		if err != nil {
 			logger.ERROR.Fatal(err)
 		}
@@ -95,11 +95,11 @@ func getYearRange(year int) (time.Time, time.Time) {
 	return startTime, endTime
 }
 
-func returnYearResults(yearInt int, auth stravahelpers.Tokens, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
+func returnYearResults(yearInt int, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
 	defer wg.Done()
 	startTime, endTime := getYearRange(yearInt)
 
-	allActivities := getRidingActivities(uint64(startTime.Unix()), uint64(endTime.Unix()), auth.AccessToken)
+	allActivities := getRidingActivities(uint64(startTime.Unix()), uint64(endTime.Unix()))
 	total, commute := ridingDistanceTotals(allActivities)
 	distances := stravaDistances{year: yearInt, commute: commute, pleasure: total - commute}
 	mu.Lock()
@@ -107,10 +107,10 @@ func returnYearResults(yearInt int, auth stravahelpers.Tokens, multiYears map[in
 	mu.Unlock()
 }
 
-func getStravaDistances(year1, year2 int, auth stravahelpers.Tokens, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
+func getStravaDistances(year1, year2 int, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
 	for i := year1; i <= year2; i++ {
 		wg.Add(1)
-		go returnYearResults(i, auth, multiYears, mu, wg)
+		go returnYearResults(i, multiYears, mu, wg)
 	}
 }
 
@@ -177,22 +177,7 @@ func main() {
 	flag.Parse()
 	year1, year2 := getYears()
 
-	var auth stravahelpers.Tokens
-
-	sec, err := stravahelpers.LoadSecrets()
-	if err != nil {
-		logger.ERROR.Fatalln(err)
-	}
-	refreshToken, accessToken, err := stravahelpers.LoadTokens(sec)
-	auth.RefreshToken = refreshToken
-	auth.AccessToken = accessToken
-
-	if err != nil {
-		logger.ERROR.Fatalln(err)
-	}
-
-	auth, err = stravahelpers.StravaOAuthCall(sec, "refresh_token", auth)
-	err = stravahelpers.StoreTokens(auth)
+	err := stravahelpers.StravaAuthenticate()
 	if err != nil {
 		logger.ERROR.Fatalln(err)
 	}
@@ -201,7 +186,7 @@ func main() {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	getStravaDistances(year1, year2, auth, multiYears, &mu, &wg)
+	getStravaDistances(year1, year2, multiYears, &mu, &wg)
 	wg.Wait()
 	outputStravaDistances(multiYears)
 	logger.DEBUG.Printf("All data: len=%d %v\n", len(multiYears), multiYears)

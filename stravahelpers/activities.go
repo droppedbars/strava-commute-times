@@ -27,10 +27,10 @@ const StravaListActivitiesPath = stravaBasePath + "athlete/activities/"
 // StravaAPIGetResponse makes a call to a Strava GET API.
 //  url is the URL to the API
 //  params is a map of key/value parameters to provide to the API
-//  accessToken is the Strava access token.
 // TODO: params should handle parameters that are not uint64
-func StravaAPIGetResponse(url string, params map[string]uint64, accessToken string) ([]byte, error) {
+func StravaAPIGetResponse(url string, params map[string]uint64) ([]byte, error) {
 	logger.DEBUG.Println("Base API call URL ", url)
+	accessToken := auth.AccessToken
 
 	client := http.Client{
 		Timeout: time.Duration(5 * time.Second),
@@ -66,10 +66,9 @@ func StravaAPIGetResponse(url string, params map[string]uint64, accessToken stri
 }
 
 // StravaAPIGetJSON returns the Strava API response which is expected to be a json result.
-//  url is the API url, params is the key/value map of paramters, accessToken is the Strava access token.
 // TODO: params should handle parameters that are not uint64
-func StravaAPIGetJSON(url string, params map[string]uint64, accessToken string) (map[string]interface{}, error) {
-	rawResponse, err := StravaAPIGetResponse(url, params, accessToken)
+func StravaAPIGetJSON(url string, params map[string]uint64) (map[string]interface{}, error) {
+	rawResponse, err := StravaAPIGetResponse(url, params)
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +86,8 @@ func StravaAPIGetJSON(url string, params map[string]uint64, accessToken string) 
 //  url is the API url, params is the key/value map of paramters, accessToken is the Strava access token.
 // TODO: params should handle parameters that are not uint64
 // TODO: need to ensure it gracefully handles API calls that do not return arrays of json
-func StravaAPIGetArray(url string, params map[string]uint64, accessToken string) ([]map[string]interface{}, error) {
-	rawResponse, err := StravaAPIGetResponse(url, params, accessToken)
+func StravaAPIGetArray(url string, params map[string]uint64) ([]map[string]interface{}, error) {
+	rawResponse, err := StravaAPIGetResponse(url, params)
 	if err != nil {
 		return nil, err
 	}
