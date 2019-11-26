@@ -13,3 +13,15 @@ func TestLoadTokens(t *testing.T) {
 		t.Error(`loadTokens did not return error on newly initialized input`)
 	}
 }
+
+// TestAPICallWithBlankTokens makes a call for a Strava Activity but does not initialize any of the
+// auth tokens.
+func TestAPICallWithBlankTokens(t *testing.T) {
+	params := map[string]uint64{
+		"id": 2877607175,
+	}
+	_, err := StravaAPIGetResponse("StravaGetActivityPath", params)
+	if err == nil {
+		t.Error("the strava call should have failed")
+	}
+}

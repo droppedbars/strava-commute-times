@@ -3,6 +3,9 @@
 // application should set up logger before making use of stravahelpers. The logging is useful to
 // show what messaging is going back and forth, and it makes use of INFO, DEBUG and TRACE log levels.
 // Errors are returned as errors to the main application.
+// The first function to call is StravaAuthenticate. This will attempt to authenticate using OAuth 
+// with Strava and populate the authentication tokens. If it is not run, the tokens will be empty
+// and attempts to interact with Strava APIs will fail.
 package stravahelpers
 
 import (
