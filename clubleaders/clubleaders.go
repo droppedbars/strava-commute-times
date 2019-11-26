@@ -80,6 +80,6 @@ func main() {
 	}
 
 	getClubMembers(clubID)
-	//getActivity()
+	getActivity()
 	getAthleteStats()
 }
