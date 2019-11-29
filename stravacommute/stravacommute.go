@@ -78,6 +78,9 @@ func getRidingActivities(startDate uint64, endDate uint64) []map[string]interfac
 	return allActivities
 }
 
+// getYearRange given a year integer will return the starting Time object and ending Time object for that
+// year. If the year provided is invalid, or the creation of the Time object fails for any reason a
+// fatal error is logged and the application is terminated.
 func getYearRange(year int) (time.Time, time.Time) {
 	yearStr := strconv.Itoa(year)
 	var startTime time.Time
@@ -95,6 +98,7 @@ func getYearRange(year int) (time.Time, time.Time) {
 	return startTime, endTime
 }
 
+// returnYearResults populates a single year into the multiYears global array
 func returnYearResults(yearInt int, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
 	defer wg.Done()
 	startTime, endTime := getYearRange(yearInt)
@@ -107,6 +111,8 @@ func returnYearResults(yearInt int, multiYears map[int]stravaDistances, mu *sync
 	mu.Unlock()
 }
 
+// getStravaDistances spins off a go thread for each requested year, and each one builds up the
+// summary of distance information for that year and adds it to the global multiYears array.
 func getStravaDistances(year1, year2 int, multiYears map[int]stravaDistances, mu *sync.Mutex, wg *sync.WaitGroup) {
 	for i := year1; i <= year2; i++ {
 		wg.Add(1)
@@ -114,6 +120,7 @@ func getStravaDistances(year1, year2 int, multiYears map[int]stravaDistances, mu
 	}
 }
 
+// outputStravaDistances prints out the results in the stravaDistances structs sorted by year
 func outputStravaDistances(multiYears map[int]stravaDistances) {
 	var years []int
 	for year := range multiYears {
@@ -149,6 +156,8 @@ func outputStravaDistances(multiYears map[int]stravaDistances) {
 	}
 }
 
+// getYears reads the input flags startYear and endYear, and returns the years with the earliest year
+// returned in the first return value.
 func getYears() (int, int) {
 	var year1 int
 	var year2 int
@@ -192,5 +201,3 @@ func main() {
 	logger.DEBUG.Printf("All data: len=%d %v\n", len(multiYears), multiYears)
 	graphResults(multiYears)
 }
-
-// TODO comment things
