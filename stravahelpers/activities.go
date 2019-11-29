@@ -27,8 +27,17 @@ const StravaGetActivityPath = stravaBasePath + "activities/"
 // StravaListActivitiesPath is the URL to GET the list of all of an athletes activities
 const StravaListActivitiesPath = stravaBasePath + "athlete/activities/"
 
+// StravaListClubMembersPath is the URL to GET the list of members for a club. The club ID must
+// be provided, url := sprintf(StravaListClubMembersPath, "12345")
 const StravaListClubMembersPath = stravaBasePath + "clubs/%d/members"
+
+// StravaListClubActivitiesPath is the URL to GET the list of activities for a club. The club ID must
+// be provided, url := sprintf(StravaListClubActivitiesPath, "12345")
 const StravaListClubActivitiesPath = stravaBasePath + "clubs/%d/activities"
+
+// StravaGetAtheleteStatsPath is the URL to GET the athlete's stats. The athlete ID must
+// be provided, url := sprintf(StravaGetAtheleteStatsPath, "12345")
+const StravaGetAtheleteStatsPath = stravaBasePath + "athletes/%d/stats"
 
 // StravaAPIGetResponse makes a call to a Strava GET API.
 //  url is the URL to the API
