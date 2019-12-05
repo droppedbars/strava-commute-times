@@ -15,10 +15,11 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/signal"
 )
 
-// TODO: make the logfile configurable
-const logFile = "./stravacommute.log"
+// TODO: make the log file configurable
+const logFileName = "./stravacommute.log"
 
 var (
 	// TRACE used for logging trace messages
@@ -32,6 +33,9 @@ var (
 	// ERROR used for logging error messages
 	ERROR *log.Logger
 )
+
+var logFileHandle io.WriteCloser
+var closeChan chan os.Signal
 
 const (
 	// NoLogLevel is the integer value that means no logs are output when passed into SetLogging
@@ -56,13 +60,14 @@ const (
 // TODO: could have log rotation
 func SetLogging(logToFile bool, level int) {
 	dump := ioutil.Discard
-	var f io.Writer
+	var f io.WriteCloser
 	var err error
 	if logToFile {
-		f, err = os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		f, err = os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		if err != nil {
-			panic("Unable to open or create " + logFile + " for logging.")
+			panic("Unable to open or create " + logFileName + " for logging: " + err.Error())
 		}
+		logFileHandle = f
 	} else {
 		f = os.Stdout
 	}
@@ -91,6 +96,19 @@ func SetLogging(logToFile bool, level int) {
 	ERROR = log.New(errorOut, "ERROR ", log.Ldate|log.Ltime)
 }
 
+func gracefulLogFileCloser() {
+	s := <-closeChan
+
+	if logFileHandle != nil {
+		WARN.Println("Application closed abnormally close log file: ", s)
+		err := logFileHandle.Close()
+		if err != nil {
+			panic("failure closing log file: " + err.Error())
+		}
+	}
+	os.Exit(1)
+}
+
 func init() {
 	dump := ioutil.Discard
 	TRACE = log.New(dump, "TRACE ", log.Ldate|log.Ltime)
@@ -98,4 +116,8 @@ func init() {
 	INFO = log.New(dump, "INFO  ", log.Ldate|log.Ltime)
 	WARN = log.New(dump, "WARN  ", log.Ldate|log.Ltime)
 	ERROR = log.New(dump, "ERROR ", log.Ldate|log.Ltime)
+
+	closeChan = make(chan os.Signal, 1)
+	signal.Notify(closeChan, os.Interrupt)
+	go gracefulLogFileCloser()
 }
