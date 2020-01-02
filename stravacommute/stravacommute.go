@@ -73,7 +73,8 @@ func getRidingActivities(startDate uint64, endDate uint64) []map[string]interfac
 		allActivities = append(allActivities, arrayJSONResponse...)
 		logger.DEBUG.Println("Page: ", i)
 		logger.TRACE.Println("API call response page: "+strconv.Itoa(i)+": ", arrayJSONResponse)
-		logger.TRACE.Println("\n\nOne response: ", arrayJSONResponse[1])
+		logger.TRACE.Println("\n\nNumber of responses: ", len(arrayJSONResponse))
+		//logger.TRACE.Println("\n\nOne response: ", arrayJSONResponse[0])
 	}
 	return allActivities
 }
